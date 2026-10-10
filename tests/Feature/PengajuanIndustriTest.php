@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Industri;
 use App\Models\PengajuanPkl;
 use App\Models\Setting;
 use App\Models\Siswa;
@@ -24,19 +23,17 @@ class PengajuanIndustriTest extends TestCase
         return $user;
     }
 
-    public function test_create_page_shows_lokasi_from_active_industries(): void
+    public function test_create_page_shows_wilayah_options(): void
     {
-        Industri::factory()->create(['nama_perusahaan' => 'PT Padang Teknologi', 'lokasi' => 'Padang', 'status' => 'aktif']);
-        Industri::factory()->create(['nama_perusahaan' => 'PT Bandung Jaya', 'lokasi' => 'Bandung', 'status' => 'aktif']);
-        Industri::factory()->create(['nama_perusahaan' => 'PT Medan Lama', 'lokasi' => 'Medan', 'status' => 'tidak_aktif']);
-
         $response = $this->actingAs($this->siswaUser())->get(route('siswa.pengajuan.create'));
 
         $response->assertOk();
-        // Kota dari industri aktif tampil sebagai pilihan
+        // 3 wilayah tetap tampil sebagai pilihan
         $response->assertSee('Padang');
-        $response->assertSee('Bandung');
-        // Kota dari industri tidak aktif tidak tampil
+        $response->assertSee('Bukittinggi');
+        $response->assertSee('Padang Panjang');
+        // Wilayah lama yang tidak dipakai lagi tidak tampil
+        $response->assertDontSee('Bandung');
         $response->assertDontSee('Medan');
     }
 
@@ -46,7 +43,7 @@ class PengajuanIndustriTest extends TestCase
 
         $response = $this->actingAs($user)->post(route('siswa.pengajuan.store'), [
             'pilihan_1' => 'Padang',
-            'pilihan_2' => 'Bandung',
+            'pilihan_2' => 'Bukittinggi',
             'no_telepon' => '08123456789',
             'jurusan' => 'TKJ',
             'penghasilan_ortu' => 3000000,
@@ -57,7 +54,7 @@ class PengajuanIndustriTest extends TestCase
         $pengajuan = PengajuanPkl::where('siswa_id', $user->siswa->id)->first();
         $this->assertNotNull($pengajuan);
         $this->assertEquals('Padang', $pengajuan->pilihan_1);
-        $this->assertEquals('Bandung', $pengajuan->pilihan_2);
+        $this->assertEquals('Bukittinggi', $pengajuan->pilihan_2);
         $this->assertEquals('pending', $pengajuan->status);
     }
 

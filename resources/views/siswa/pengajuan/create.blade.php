@@ -50,9 +50,9 @@
                             <select name="pilihan_1" id="pilihan_1_select"
                                 class="form-select @error('pilihan_1') is-invalid @enderror" onchange="toggleLainnya(1)">
                                 <option value="">Pilih Tempat</option>
-                                @foreach ($lokasiList as $lokasi)
-                                    <option value="{{ $lokasi }}"
-                                        {{ old('pilihan_1') == $lokasi ? 'selected' : '' }}>{{ $lokasi }}</option>
+                                @foreach ($wilayahList as $wilayah)
+                                    <option value="{{ $wilayah }}"
+                                        {{ old('pilihan_1') == $wilayah ? 'selected' : '' }}>{{ $wilayah }}</option>
                                 @endforeach
                                 <option value="Lainnya" {{ old('pilihan_1') == 'Lainnya' ? 'selected' : '' }}>Lainnya
                                     (tulis sendiri)</option>
@@ -92,9 +92,9 @@
                             <select name="pilihan_2" id="pilihan_2_select"
                                 class="form-select @error('pilihan_2') is-invalid @enderror" onchange="toggleLainnya(2)">
                                 <option value="">Pilih Tempat</option>
-                                @foreach ($lokasiList as $lokasi)
-                                    <option value="{{ $lokasi }}"
-                                        {{ old('pilihan_2') == $lokasi ? 'selected' : '' }}>{{ $lokasi }}</option>
+                                @foreach ($wilayahList as $wilayah)
+                                    <option value="{{ $wilayah }}"
+                                        {{ old('pilihan_2') == $wilayah ? 'selected' : '' }}>{{ $wilayah }}</option>
                                 @endforeach
                                 <option value="Lainnya" {{ old('pilihan_2') == 'Lainnya' ? 'selected' : '' }}>Lainnya
                                     (tulis sendiri)</option>

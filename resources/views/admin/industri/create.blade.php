@@ -119,7 +119,7 @@
                                 </label>
                                 <select name="lokasi" id="lokasiSelect" class="form-input" required>
                                     <option value="">Pilih Lokasi</option>
-                                    @foreach (['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta', 'Lainnya'] as $lok)
+                                    @foreach (['Padang', 'Bukittinggi', 'Padang Panjang', 'Lainnya'] as $lok)
                                         <option value="{{ $lok }}" {{ old('lokasi') == $lok ? 'selected' : '' }}>
                                             {{ $lok }}</option>
                                     @endforeach

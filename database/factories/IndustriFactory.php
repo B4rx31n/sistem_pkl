@@ -12,7 +12,7 @@ class IndustriFactory extends Factory
             'user_id' => null,
             'kode_perusahaan' => $this->faker->unique()->bothify('IND-####'),
             'nama_perusahaan' => $this->faker->company(),
-            'lokasi' => $this->faker->randomElement(['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta']),
+            'lokasi' => $this->faker->randomElement(['Padang', 'Bukittinggi', 'Padang Panjang']),
             'alamat' => $this->faker->address(),
             'no_telepon' => $this->faker->phoneNumber(),
             'email' => $this->faker->companyEmail(),

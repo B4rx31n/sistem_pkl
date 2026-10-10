@@ -114,7 +114,7 @@
                                     Lokasi / Kota <span class="text-red-500">*</span>
                                 </label>
                                 @php
-                                    $standardLokasi = ['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta'];
+                                    $standardLokasi = ['Padang', 'Bukittinggi', 'Padang Panjang'];
                                     $currentLokasi = old('lokasi', $industri->lokasi);
                                     $isCustomLokasi = $currentLokasi && !in_array($currentLokasi, $standardLokasi) && $currentLokasi != 'Lainnya';
                                     $selectedLokasi = $isCustomLokasi ? 'Lainnya' : $currentLokasi;

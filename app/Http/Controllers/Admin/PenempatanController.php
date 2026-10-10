@@ -147,10 +147,9 @@ class PenempatanController extends Controller
         // Update pengajuan dengan penempatan_id
         $pengajuan->penempatan_id = $penempatan->id;
 
-        // Jika industri "Lainnya", update tempat_diterima dengan lokasi kustom
-        if ($request->industri_id === 'lainnya') {
-            $pengajuan->tempat_diterima = $request->industri_lainnya;
-        }
+        // Tempat diterima otomatis mengikuti wilayah (lokasi) industri penempatan.
+        // Wilayah industri sudah ditentukan saat data industri dibuat.
+        $pengajuan->tempat_diterima = $industri->lokasi;
 
         $pengajuan->save();
 
@@ -191,6 +190,7 @@ class PenempatanController extends Controller
             // Update pengajuan: hapus penempatan_id dan ubah status ke pending
             $pengajuan->penempatan_id = null;
             $pengajuan->status = 'pending';
+            $pengajuan->tempat_diterima = null;
             $pengajuan->save();
         }
 

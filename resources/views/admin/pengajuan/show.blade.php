@@ -85,36 +85,14 @@
                             </select>
                         </div>
 
-                        <!-- TEMPAT DITERIMA (dinamis) -->
+                        <!-- TEMPAT DITERIMA: otomatis dari wilayah industri saat penempatan -->
                         <div class="col-md-4 mb-3">
-                            <label class="form-label">Tempat Diterima <span class="text-danger">*</span></label>
-
-                            <!-- Dropdown untuk status DITERIMA -->
-                            <select name="tempat_diterima_select" class="form-select" id="tempatDiterimaSelect">
-                                <option value="">Pilih Tempat</option>
-                                <option value="{{ $pengajuan->pilihan_1 }}"
-                                    {{ $pengajuan->tempat_diterima == $pengajuan->pilihan_1 ? 'selected' : '' }}>
-                                    {{ $pengajuan->pilihan_1 }}
-                                </option>
-                                <option value="{{ $pengajuan->pilihan_2 }}"
-                                    {{ $pengajuan->tempat_diterima == $pengajuan->pilihan_2 ? 'selected' : '' }}>
-                                    {{ $pengajuan->pilihan_2 }}
-                                </option>
-                            </select>
-
-                            <!-- Input text untuk status DITOLAK -->
-                            <input type="text" name="tempat_diterima_input" class="form-control" id="tempatDiterimaInput"
-                                value="{{ $pengajuan->tempat_diterima }}" placeholder="Masukkan tempat lain..."
-                                style="display: none;">
-
-                            <small class="text-muted" id="tempatDiterimaHint">
-                                @if ($pengajuan->status == 'diterima')
-                                    Harus sesuai dengan pilihan 1 atau pilihan 2
-                                @elseif($pengajuan->status == 'ditolak')
-                                    Bisa diketik manual
-                                @else
-                                    Pilih tempat setelah menentukan status
-                                @endif
+                            <label class="form-label">Tempat Diterima</label>
+                            <div class="form-control bg-light">
+                                {{ $pengajuan->tempat_diterima ?: '-' }}
+                            </div>
+                            <small class="text-muted">
+                                Otomatis mengikuti wilayah industri tempat siswa ditempatkan.
                             </small>
                         </div>
 
@@ -257,7 +235,7 @@
                                             </option>
                                         @endforeach
                                         <option value="lainnya"
-                                            {{ old('industri_id') == 'lainnya' ? 'selected' : '' }}>
+                                            {{ old('industri_id') === 'lainnya' || (!old('industri_id') && $pengajuan->status == 'ditolak') ? 'selected' : '' }}>
                                             Lainnya (tulis lokasi sendiri)
                                         </option>
                                     </select>
@@ -377,46 +355,12 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // ============================================
-            // 1. TOGGLE TEMPAT DITERIMA (Dropdown/Input) - untuk form pengajuan
-            // ============================================
-            const statusSelect = document.getElementById('statusSelect');
-            const tempatSelect = document.getElementById('tempatDiterimaSelect');
-            const tempatInput = document.getElementById('tempatDiterimaInput');
-            const tempatHint = document.getElementById('tempatDiterimaHint');
-
-            function toggleTempatDiterima() {
-                const status = statusSelect.value;
-
-                if (status === 'diterima') {
-                    tempatSelect.style.display = 'block';
-                    tempatInput.style.display = 'none';
-                    tempatHint.textContent = 'Harus sesuai dengan pilihan 1 atau pilihan 2';
-                    tempatSelect.required = true;
-                    tempatInput.required = false;
-                } else if (status === 'ditolak') {
-                    tempatSelect.style.display = 'none';
-                    tempatInput.style.display = 'block';
-                    tempatHint.textContent = 'Bisa diketik manual';
-                    tempatSelect.required = false;
-                    tempatInput.required = false;
-                } else {
-                    tempatSelect.style.display = 'none';
-                    tempatInput.style.display = 'none';
-                    tempatSelect.required = false;
-                    tempatInput.required = false;
-                }
-            }
-
-            toggleTempatDiterima();
-            statusSelect.addEventListener('change', toggleTempatDiterima);
-
-            // ============================================
-            // 2. DATA INDUSTRI & VALIDASI
+            // 1. DATA INDUSTRI & VALIDASI
             // ============================================
             const industriData = JSON.parse('{!! json_encode($industriDataJs) !!}');
 
             // ============================================
-            // 3. TOGGLE INDUSTRI LAINNYA
+            // 2. TOGGLE INDUSTRI LAINNYA
             // ============================================
             const industriSelect = document.getElementById('industriSelect');
             const industriLainnyaInput = document.getElementById('industriLainnyaInput');
@@ -439,7 +383,7 @@
             }
 
             // ============================================
-            // 4. FUNGSI ALERT
+            // 3. FUNGSI ALERT
             // ============================================
             function showAlert(message, type) {
                 type = type || 'info';
@@ -468,7 +412,7 @@
             }
 
             // ============================================
-            // 5. VALIDASI SEBELUM SUBMIT PENEMPATAN
+            // 4. VALIDASI SEBELUM SUBMIT PENEMPATAN
             // ============================================
             const formPenempatan = document.getElementById('formPenempatan');
             if (formPenempatan) {

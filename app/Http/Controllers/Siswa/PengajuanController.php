@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Siswa;
 
 use App\Http\Controllers\Controller;
-use App\Models\Industri;
 use App\Models\Kompetensi;
 use App\Models\PengajuanPkl;
 use Illuminate\Http\Request;
@@ -28,26 +27,12 @@ class PengajuanController extends Controller
             return redirect()->route('siswa.pengajuan.index')->with('info', 'Anda sudah mengajukan permohonan PKL.');
         }
         $jurusanList = Kompetensi::orderBy('nama_kompetensi')->pluck('nama_kompetensi');
-        $industriByLokasi = Industri::where('status', 'aktif')
-            ->where(function ($q) use ($siswa) {
-                $q->where('jurusan', $siswa->jurusan)
-                    ->orWhere('jurusan', 'Semua Jurusan');
-            })
-            ->orderBy('nama_perusahaan')
-            ->get()
-            ->groupBy('lokasi');
 
-        // Daftar kota/daerah untuk pilihan tempat siswa.
-        // Diambil dari gabungan (unik) lokasi seluruh industri aktif, kecuali opsi "Lainnya".
-        $lokasiList = Industri::where('status', 'aktif')
-            ->whereNotNull('lokasi')
-            ->where('lokasi', '!=', '')
-            ->where('lokasi', '!=', 'Lainnya')
-            ->distinct()
-            ->orderBy('lokasi')
-            ->pluck('lokasi');
+        // Daftar wilayah tetap untuk pilihan tempat PKL siswa.
+        // Opsi "Lainnya" (isi sendiri) ditambahkan langsung di view.
+        $wilayahList = ['Padang', 'Bukittinggi', 'Padang Panjang'];
 
-        return view('siswa.pengajuan.create', compact('siswa', 'jurusanList', 'industriByLokasi', 'lokasiList'));
+        return view('siswa.pengajuan.create', compact('siswa', 'jurusanList', 'wilayahList'));
     }
 
     public function store(Request $request)
