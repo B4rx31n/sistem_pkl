@@ -31,11 +31,6 @@ class PengajuanController extends Controller
                     ->orWhere('kategori', 'Semua');
             });
 
-        // Jika sudah ada tempat diterima, industri mengikuti lokasi tersebut
-        if ($pengajuan->tempat_diterima && $pengajuan->status === 'diterima') {
-            $industriQuery->where('lokasi', 'like', '%' . $pengajuan->tempat_diterima . '%');
-        }
-
         $industris = $industriQuery
             ->with(['penempatan' => function ($q) {
                 $q->where('status', 'aktif');

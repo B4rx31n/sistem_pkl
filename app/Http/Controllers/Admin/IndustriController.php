@@ -64,12 +64,15 @@ class IndustriController extends Controller
 
         $user->setPasswordCopy($request->password);
 
+        // Tentukan lokasi: jika "Lainnya", pakai nama kota yang diketik admin
+        $lokasi = $request->lokasi === 'Lainnya' ? $request->lokasi_lainnya : $request->lokasi;
+
         // Create Industri
         Industri::create([
             'user_id' => $user->id,
             'kode_perusahaan' => $request->kode_perusahaan,
             'nama_perusahaan' => $request->nama_perusahaan,
-            'lokasi' => $request->lokasi,
+            'lokasi' => $lokasi,
             'alamat' => $request->alamat,
             'no_telepon' => $request->no_telepon,
             'email' => $request->email,
@@ -100,27 +103,33 @@ class IndustriController extends Controller
     {
         $data = $request->validated();
 
-        // Update User (email login & password)
-        $userData = [
-            'name' => $data['nama_perusahaan'],
-            'email' => $data['email_login'],
-        ];
+        // Update User (email login & password) - hanya jika industri punya akun login.
+        // Industri kustom ("Lainnya") dari form penempatan tidak memiliki akun.
+        if ($industri->user) {
+            $userData = [
+                'name' => $data['nama_perusahaan'],
+                'email' => $data['email_login'],
+            ];
 
-        if (!empty($data['password'])) {
-            $userData['password'] = Hash::make($data['password']);
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
+
+            $industri->user()->update($userData);
+
+            if (!empty($data['password'])) {
+                $industri->user->setPasswordCopy($data['password']);
+            }
         }
 
-        $industri->user()->update($userData);
-
-        if (!empty($data['password'])) {
-            $industri->user->setPasswordCopy($data['password']);
-        }
+        // Tentukan lokasi: jika "Lainnya", pakai nama kota yang diketik admin
+        $lokasi = $data['lokasi'] === 'Lainnya' ? ($data['lokasi_lainnya'] ?? null) : $data['lokasi'];
 
         // Update Industri
         $industri->update([
             'kode_perusahaan' => $data['kode_perusahaan'],
             'nama_perusahaan' => $data['nama_perusahaan'],
-            'lokasi' => $data['lokasi'],
+            'lokasi' => $lokasi,
             'alamat' => $data['alamat'],
             'no_telepon' => $data['no_telepon'],
             'email' => $data['email'] ?? null,
@@ -138,7 +147,13 @@ class IndustriController extends Controller
 
     public function destroy(Industri $industri)
     {
-        $industri->user->delete();
+        // Industri kustom ("Lainnya") tidak punya akun login user.
+        if ($industri->user) {
+            $industri->user->delete();
+        }
+
+        $industri->delete();
+
         return redirect()->route('admin.industri.index')
             ->with('success', 'Data industri berhasil dihapus.');
     }

@@ -24,29 +24,30 @@ class PengajuanIndustriTest extends TestCase
         return $user;
     }
 
-    public function test_create_page_shows_industries_grouped_by_lokasi(): void
+    public function test_create_page_shows_lokasi_from_active_industries(): void
     {
         Industri::factory()->create(['nama_perusahaan' => 'PT Padang Teknologi', 'lokasi' => 'Padang', 'status' => 'aktif']);
         Industri::factory()->create(['nama_perusahaan' => 'PT Bandung Jaya', 'lokasi' => 'Bandung', 'status' => 'aktif']);
-        Industri::factory()->create(['nama_perusahaan' => 'PT Padang Lama', 'lokasi' => 'Padang', 'status' => 'tidak_aktif']);
+        Industri::factory()->create(['nama_perusahaan' => 'PT Medan Lama', 'lokasi' => 'Medan', 'status' => 'tidak_aktif']);
 
         $response = $this->actingAs($this->siswaUser())->get(route('siswa.pengajuan.create'));
 
         $response->assertOk();
-        $response->assertSee('PT Padang Teknologi');
-        $response->assertSee('PT Bandung Jaya');
-        $response->assertDontSee('PT Padang Lama');
+        // Kota dari industri aktif tampil sebagai pilihan
+        $response->assertSee('Padang');
+        $response->assertSee('Bandung');
+        // Kota dari industri tidak aktif tidak tampil
+        $response->assertDontSee('Medan');
     }
 
-    public function test_store_saves_industri_choices(): void
+    public function test_store_saves_pilihan_tempat(): void
     {
         $user = $this->siswaUser();
 
         $response = $this->actingAs($user)->post(route('siswa.pengajuan.store'), [
             'pilihan_1' => 'Padang',
-            'industri_1' => 'PT Padang Teknologi',
             'pilihan_2' => 'Bandung',
-            'industri_2' => 'PT Bandung Jaya',
+            'no_telepon' => '08123456789',
             'jurusan' => 'TKJ',
             'penghasilan_ortu' => 3000000,
         ]);
@@ -55,8 +56,9 @@ class PengajuanIndustriTest extends TestCase
 
         $pengajuan = PengajuanPkl::where('siswa_id', $user->siswa->id)->first();
         $this->assertNotNull($pengajuan);
-        $this->assertEquals('PT Padang Teknologi', $pengajuan->industri_1);
-        $this->assertEquals('PT Bandung Jaya', $pengajuan->industri_2);
+        $this->assertEquals('Padang', $pengajuan->pilihan_1);
+        $this->assertEquals('Bandung', $pengajuan->pilihan_2);
+        $this->assertEquals('pending', $pengajuan->status);
     }
 
     public function test_admin_can_update_logo_via_settings(): void

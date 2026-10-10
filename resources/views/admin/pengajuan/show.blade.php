@@ -56,7 +56,7 @@
                                 <span class="badge bg-danger">Ditolak</span>
                             @endif
                         </p>
-                        @if ($pengajuan->status == 'diterima')
+                        @if ($pengajuan->tempat_diterima)
                             <p><strong>Tempat Diterima:</strong> {{ $pengajuan->tempat_diterima }}</p>
                         @endif
                         @if ($pengajuan->catatan_admin)
@@ -252,10 +252,23 @@
                                                 {{ old('industri_id') == $industri->id ? 'selected' : '' }}
                                                 data-sisa="{{ $sisaKuota }}">
                                                 {{ $industri->nama_perusahaan }}
+                                                @if ($industri->lokasi) - {{ $industri->lokasi }} @endif
                                                 (Kuota: {{ $industri->kuota }} | Sisa: {{ $sisaKuota }})
                                             </option>
                                         @endforeach
+                                        <option value="lainnya"
+                                            {{ old('industri_id') == 'lainnya' ? 'selected' : '' }}>
+                                            Lainnya (tulis lokasi sendiri)
+                                        </option>
                                     </select>
+                                    <input type="text" name="industri_lainnya" id="industriLainnyaInput"
+                                        class="form-control mt-2 @error('industri_lainnya') is-invalid @enderror"
+                                        placeholder="Masukkan lokasi industri lainnya..."
+                                        value="{{ old('industri_lainnya') }}"
+                                        style="display: none;">
+                                    @error('industri_lainnya')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                     <small class="text-muted">
                                         <i class="fas fa-info-circle me-1"></i> Pilih industri yang akan menampung siswa
                                     </small>
@@ -360,7 +373,7 @@
     </div>
 @endsection
 
-@section('scripts')
+@push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // ============================================
@@ -403,8 +416,27 @@
             const industriData = JSON.parse('{!! json_encode($industriDataJs) !!}');
 
             // ============================================
-            // 3. TOGGLE TEMPAT DITERIMA (Dropdown/Input)
+            // 3. TOGGLE INDUSTRI LAINNYA
             // ============================================
+            const industriSelect = document.getElementById('industriSelect');
+            const industriLainnyaInput = document.getElementById('industriLainnyaInput');
+
+            function toggleIndustriLainnya() {
+                if (industriSelect.value === 'lainnya') {
+                    industriLainnyaInput.style.display = 'block';
+                    industriLainnyaInput.disabled = false;
+                    industriLainnyaInput.focus();
+                } else {
+                    industriLainnyaInput.style.display = 'none';
+                    industriLainnyaInput.disabled = true;
+                    industriLainnyaInput.value = '';
+                }
+            }
+
+            if (industriSelect) {
+                toggleIndustriLainnya();
+                industriSelect.addEventListener('change', toggleIndustriLainnya);
+            }
 
             // ============================================
             // 4. FUNGSI ALERT
@@ -448,6 +480,16 @@
                         return false;
                     }
 
+                    // Jika pilih "Lainnya", validasi input lokasi
+                    if (industriSelect.value === 'lainnya') {
+                        const lainnyaInput = document.getElementById('industriLainnyaInput');
+                        if (!lainnyaInput.value.trim()) {
+                            e.preventDefault();
+                            showAlert('Silakan masukkan lokasi industri lainnya.', 'danger');
+                            return false;
+                        }
+                    }
+
                     const found = industriData.find(function(item) {
                         return item.id == industriSelect.value;
                     });
@@ -463,4 +505,4 @@
             }
         });
     </script>
-@endsection
+@endpush

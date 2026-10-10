@@ -57,7 +57,7 @@
                                     <span class="badge bg-danger">Ditolak</span>
                                 @endif
                             </p>
-                            @if ($pengajuan->status == 'diterima')
+                            @if ($pengajuan->tempat_diterima)
                                 <p><strong>Tempat Diterima:</strong> {{ $pengajuan->tempat_diterima }}</p>
                             @endif
                             @if ($pengajuan->catatan_admin)

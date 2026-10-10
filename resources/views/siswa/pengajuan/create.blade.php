@@ -50,18 +50,17 @@
                             <select name="pilihan_1" id="pilihan_1_select"
                                 class="form-select @error('pilihan_1') is-invalid @enderror" onchange="toggleLainnya(1)">
                                 <option value="">Pilih Tempat</option>
-                                <option value="Padang" {{ old('pilihan_1') == 'Padang' ? 'selected' : '' }}>Padang</option>
-                                <option value="Padang Panjang" {{ old('pilihan_1') == 'Padang Panjang' ? 'selected' : '' }}>Padang Panjang
-                                </option>
-                                <option value="Bukittinggi" {{ old('pilihan_1') == 'Bukittinggi' ? 'selected' : '' }}>Bukittinggi
-                                </option>
+                                @foreach ($lokasiList as $lokasi)
+                                    <option value="{{ $lokasi }}"
+                                        {{ old('pilihan_1') == $lokasi ? 'selected' : '' }}>{{ $lokasi }}</option>
+                                @endforeach
                                 <option value="Lainnya" {{ old('pilihan_1') == 'Lainnya' ? 'selected' : '' }}>Lainnya
                                     (tulis sendiri)</option>
                             </select>
                             <input type="text" name="pilihan_1" id="pilihan_1_input"
                                 class="form-control @error('pilihan_1') is-invalid @enderror d-none"
                                 placeholder="Tulis tempat PKL lainnya..."
-                                value="{{ old('pilihan_1') == 'Lainnya' ? '' : old('pilihan_1') }}">
+                                value="{{ old('pilihan_1') == 'Lainnya' ? '' : old('pilihan_1') }}" disabled>
                             @error('pilihan_1')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -93,18 +92,17 @@
                             <select name="pilihan_2" id="pilihan_2_select"
                                 class="form-select @error('pilihan_2') is-invalid @enderror" onchange="toggleLainnya(2)">
                                 <option value="">Pilih Tempat</option>
-                                <option value="Padang" {{ old('pilihan_2') == 'Padang' ? 'selected' : '' }}>Padang</option>
-                                <option value="Padang Panjang" {{ old('pilihan_2') == 'Padang Panjang' ? 'selected' : '' }}>Padang panjang
-                                </option>
-                                <option value="Bukittinggi" {{ old('pilihan_2') == 'Bukittinggi' ? 'selected' : '' }}>
-                                    Bukittinggi</option>
+                                @foreach ($lokasiList as $lokasi)
+                                    <option value="{{ $lokasi }}"
+                                        {{ old('pilihan_2') == $lokasi ? 'selected' : '' }}>{{ $lokasi }}</option>
+                                @endforeach
                                 <option value="Lainnya" {{ old('pilihan_2') == 'Lainnya' ? 'selected' : '' }}>Lainnya
                                     (tulis sendiri)</option>
                             </select>
                             <input type="text" name="pilihan_2" id="pilihan_2_input"
                                 class="form-control @error('pilihan_2') is-invalid @enderror d-none"
                                 placeholder="Tulis tempat PKL lainnya..."
-                                value="{{ old('pilihan_2') == 'Lainnya' ? '' : old('pilihan_2') }}">
+                                value="{{ old('pilihan_2') == 'Lainnya' ? '' : old('pilihan_2') }}" disabled>
                             @error('pilihan_2')
                                 <div class="invalid-feedback">{{ $message }}</div>
                             @enderror
@@ -183,158 +181,52 @@
 
 @push('scripts')
     <script>
-        const industriByLokasi = @json($industriByLokasi->map(fn($list) => $list->pluck('nama_perusahaan')));
-
         function toggleLainnya(n) {
             const select = document.getElementById('pilihan_' + n + '_select');
             const input = document.getElementById('pilihan_' + n + '_input');
 
-            const industriWrapper = document.getElementById('industri_' + n + '_wrapper');
-            const industriSelect = document.getElementById('industri_' + n + '_select');
-            const industriInput = document.getElementById('industri_' + n + '_input');
+            if (!select || !input) return;
 
             if (select.value === 'Lainnya') {
-                // Sembunyikan select tempat PKL
+                // Sembunyikan select tempat PKL, tampilkan input
                 select.classList.add('d-none');
                 select.disabled = true;
 
-                // Tampilkan input tempat PKL
-                input.classList.remove('d-none');
-                input.disabled = false;
-                input.focus();
-
-                // Sembunyikan industri
-                industriWrapper.classList.add('d-none');
-                industriSelect.disabled = true;
-                industriInput.disabled = true;
-
-                industriSelect.value = '';
-                industriInput.value = '';
-
-            } else if (select.value === '') {
-                // Belum memilih tempat PKL
-                select.classList.remove('d-none');
-                select.disabled = false;
-
-                input.classList.add('d-none');
-                input.disabled = true;
-                input.value = '';
-
-                // Sembunyikan industri
-                industriWrapper.classList.add('d-none');
-                industriSelect.disabled = true;
-                industriInput.disabled = true;
-
-                industriSelect.value = '';
-                industriInput.value = '';
-
-            } else {
-                // Tempat PKL sudah dipilih
-                select.classList.remove('d-none');
-                select.disabled = false;
-
-                input.classList.add('d-none');
-                input.disabled = true;
-                input.value = '';
-
-                // Tampilkan industri
-                industriWrapper.classList.remove('d-none');
-                industriSelect.disabled = false;
-
-                // Isi daftar industri berdasarkan lokasi
-                fillIndustri(n, select.value);
-            }
-        }
-
-        function toggleIndustriLainnya(n) {
-            const select = document.getElementById('industri_' + n + '_select');
-            const input = document.getElementById('industri_' + n + '_input');
-
-            if (select.value === 'Lainnya') {
-                select.classList.add('d-none');
-                select.disabled = true;
                 input.classList.remove('d-none');
                 input.disabled = false;
                 input.focus();
             } else {
+                // Tampilkan select tempat PKL, sembunyikan input
                 select.classList.remove('d-none');
                 select.disabled = false;
+
                 input.classList.add('d-none');
                 input.disabled = true;
-                input.value = '';
+
+                if (select.value !== '') {
+                    input.value = '';
+                }
             }
-        }
-
-        function fillIndustri(n, lokasi) {
-            const select = document.getElementById('industri_' + n + '_select');
-            const input = document.getElementById('industri_' + n + '_input');
-            const wrapper = document.getElementById('industri_' + n + '_wrapper');
-
-            // Kalau lokasi belum dipilih, sembunyikan industri
-            if (!lokasi || lokasi === 'Lainnya') {
-                wrapper.classList.add('d-none');
-                select.disabled = true;
-                input.disabled = true;
-                return;
-            }
-
-            // Tampilkan industri
-            wrapper.classList.remove('d-none');
-
-            select.innerHTML = '<option value="">Pilih Industri</option>';
-
-            (industriByLokasi[lokasi] || []).forEach(function(name) {
-                const opt = document.createElement('option');
-                opt.value = name;
-                opt.textContent = name;
-                select.appendChild(opt);
-            });
-
-            const lainnya = document.createElement('option');
-            lainnya.value = 'Lainnya';
-            lainnya.textContent = 'Lainnya (tulis sendiri)';
-            select.appendChild(lainnya);
-
-            select.disabled = false;
-            select.value = '';
-
-            input.value = '';
-            input.classList.add('d-none');
-            input.disabled = true;
-
-            select.classList.remove('d-none');
         }
 
         document.addEventListener('DOMContentLoaded', function() {
-            toggleLainnya(1);
-            toggleLainnya(2);
-            toggleIndustriLainnya(1);
-            toggleIndustriLainnya(2);
+            ['1', '2'].forEach(function(n) {
+                const select = document.getElementById('pilihan_' + n + '_select');
+                const input = document.getElementById('pilihan_' + n + '_input');
 
-            const pilihan1 = document.getElementById('pilihan_1_select');
-            const pilihan2 = document.getElementById('pilihan_2_select');
-            const industri1 = document.getElementById('industri_1_select');
-            const industri2 = document.getElementById('industri_2_select');
+                if (!select || !input) return;
 
-            @if (old('industri_1') && old('industri_1') != 'Lainnya')
-                fillIndustri(1, @json(old('pilihan_1')));
-                industri1.value = @json(old('industri_1'));
-            @elseif (old('industri_1') && old('industri_1') == 'Lainnya')
-                fillIndustri(1, @json(old('pilihan_1')));
-                toggleIndustriLainnya(1);
-            @else
-                fillIndustri(1, pilihan1.value);
-            @endif
+                // Kalau ada nilai custom (hasil old()), langsung tampilkan input
+                if (select.value === '' && input.value.trim() !== '') {
+                    select.classList.add('d-none');
+                    select.disabled = true;
 
-            @if (old('industri_2') && old('industri_2') != 'Lainnya')
-                fillIndustri(2, @json(old('pilihan_2')));
-                industri2.value = @json(old('industri_2'));
-            @elseif (old('industri_2') && old('industri_2') == 'Lainnya')
-                fillIndustri(2, @json(old('pilihan_2')));
-                toggleIndustriLainnya(2);
-            @else
-                fillIndustri(2, pilihan2.value);
-            @endif
+                    input.classList.remove('d-none');
+                    input.disabled = false;
+                } else {
+                    toggleLainnya(n);
+                }
+            });
         });
     </script>
 @endpush

@@ -55,10 +55,12 @@ class PenempatanController extends Controller
     public function store(Request $request)
     {
         // Validasi input
+        // Catatan: industri_id boleh berisi id industri ATAU string "lainnya"
         $request->validate([
             'pengajuan_id' => 'required|exists:pengajuan_pkl,id',
             'siswa_id' => 'required|exists:siswas,id',
-            'industri_id' => 'required|exists:industris,id',
+            'industri_id' => 'required|string',
+            'industri_lainnya' => 'nullable|string|max:255',
             'guru_id' => 'required|exists:gurus,id',
             'kompetensi_id' => 'required|exists:kompetensis,id',
             'tanggal_mulai' => 'required|date|after_or_equal:today',
@@ -66,7 +68,6 @@ class PenempatanController extends Controller
             'status' => 'required|in:aktif,selesai,batal',
         ], [
             'industri_id.required' => 'Industri wajib dipilih.',
-            'industri_id.exists' => 'Industri tidak valid.',
         ]);
 
         // CEK 1: Ambil data pengajuan
@@ -87,22 +88,55 @@ class PenempatanController extends Controller
             return back()->with('error', 'Data siswa tidak sesuai dengan pengajuan.');
         }
 
-        // Ambil data industri untuk pengecekan kuota
-        $industri = Industri::findOrFail($request->industri_id);
+        // Handle industri "Lainnya" - buat record industri baru
+        if ($request->industri_id === 'lainnya') {
+            $request->validate([
+                'industri_lainnya' => 'required|string|max:255',
+            ], [
+                'industri_lainnya.required' => 'Nama kota/daerah industri lainnya wajib diisi.',
+            ]);
 
-        // CEK 5: Cek kuota industri
-        $penempatanAktif = PenempatanPkl::where('industri_id', $request->industri_id)
-            ->where('status', 'aktif')
-            ->count();
+            $kategori = $pengajuan->siswa->kategori_jurusan ?? 'Semua';
 
-        if ($penempatanAktif >= $industri->kuota) {
-            return back()->with('error', 'Kuota industri sudah penuh. Sisa kuota: 0');
+            $industri = Industri::create([
+                'kode_perusahaan' => 'LAINNYA-' . strtoupper(uniqid()),
+                'nama_perusahaan' => 'Industri di ' . $request->industri_lainnya,
+                'lokasi' => $request->industri_lainnya,
+                'alamat' => $request->industri_lainnya,
+                'no_telepon' => '-',
+                'email' => '-',
+                'bidang_usaha' => '-',
+                'jurusan' => $kategori,
+                'kategori' => $kategori,
+                'penanggung_jawab' => '-',
+                'kuota' => 1,
+                'status' => 'aktif',
+            ]);
+        } else {
+            // Pastikan id industri valid
+            $request->validate([
+                'industri_id' => 'exists:industris,id',
+            ], [
+                'industri_id.exists' => 'Industri tidak valid.',
+            ]);
+
+            // Ambil data industri untuk pengecekan kuota
+            $industri = Industri::findOrFail($request->industri_id);
+
+            // CEK 5: Cek kuota industri
+            $penempatanAktif = PenempatanPkl::where('industri_id', $industri->id)
+                ->where('status', 'aktif')
+                ->count();
+
+            if ($penempatanAktif >= $industri->kuota) {
+                return back()->with('error', 'Kuota industri sudah penuh. Sisa kuota: 0');
+            }
         }
 
         // Create penempatan
         $penempatan = PenempatanPkl::create([
             'siswa_id' => $request->siswa_id,
-            'industri_id' => $request->industri_id,
+            'industri_id' => $industri->id,
             'guru_id' => $request->guru_id,
             'kompetensi_id' => $request->kompetensi_id,
             'tanggal_mulai' => $request->tanggal_mulai,
@@ -112,6 +146,12 @@ class PenempatanController extends Controller
 
         // Update pengajuan dengan penempatan_id
         $pengajuan->penempatan_id = $penempatan->id;
+
+        // Jika industri "Lainnya", update tempat_diterima dengan lokasi kustom
+        if ($request->industri_id === 'lainnya') {
+            $pengajuan->tempat_diterima = $request->industri_lainnya;
+        }
+
         $pengajuan->save();
 
         return redirect()->route('admin.pengajuan.show', $pengajuan->id)

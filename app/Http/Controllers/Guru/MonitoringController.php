@@ -36,13 +36,13 @@ class MonitoringController extends Controller
 
         $totalJurnalHariIni = JurnalHarian::whereHas('penempatan', function ($q) use ($guru) {
             $q->where('guru_id', $guru->id);
-        })->whereDate('tanggal', today())->count();
+        })->where('status', 'submitted')->whereDate('tanggal', today())->count();
 
         $siswaBelumJurnal = PenempatanPkl::with('siswa')
             ->where('guru_id', $guru->id)
             ->where('status', 'aktif')
             ->whereDoesntHave('jurnalHarian', function ($q) {
-                $q->whereDate('tanggal', today());
+                $q->where('status', 'submitted')->whereDate('tanggal', today());
             })
             ->get();
 
@@ -65,6 +65,7 @@ class MonitoringController extends Controller
         }
 
         $jurnals = JurnalHarian::where('penempatan_id', $penempatan->id)
+            ->where('status', 'submitted')
             ->orderBy('tanggal', 'desc')
             ->paginate(10);
 
@@ -83,6 +84,11 @@ class MonitoringController extends Controller
         // Cek apakah guru ini bertanggung jawab
         if ($jurnal->penempatan->guru_id != $guru->id) {
             abort(403, 'Anda tidak memiliki akses ke jurnal ini.');
+        }
+
+        // Guru hanya boleh berkomentar pada jurnal yang sudah disubmit siswa
+        if ($jurnal->status != 'submitted') {
+            return back()->with('error', 'Jurnal belum disubmit oleh siswa. Komentar hanya bisa diberikan pada jurnal yang sudah disubmit.');
         }
 
         KomentarJurnal::create([

@@ -117,14 +117,22 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Lokasi / Kota <span class="text-red-500">*</span>
                                 </label>
-                                <select name="lokasi" class="form-input" required>
+                                <select name="lokasi" id="lokasiSelect" class="form-input" required>
                                     <option value="">Pilih Lokasi</option>
                                     @foreach (['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta', 'Lainnya'] as $lok)
                                         <option value="{{ $lok }}" {{ old('lokasi') == $lok ? 'selected' : '' }}>
                                             {{ $lok }}</option>
                                     @endforeach
                                 </select>
+                                <input type="text" name="lokasi_lainnya" id="lokasiLainnyaInput"
+                                    class="form-input mt-2 @error('lokasi_lainnya') is-invalid @enderror"
+                                    placeholder="Tulis nama kota/daerah..."
+                                    value="{{ old('lokasi_lainnya') }}"
+                                    style="{{ old('lokasi') == 'Lainnya' ? '' : 'display: none;' }}">
                                 @error('lokasi')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                @error('lokasi_lainnya')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -221,3 +229,27 @@
     </div>
 
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('lokasiSelect');
+            const input = document.getElementById('lokasiLainnyaInput');
+            if (!select || !input) return;
+
+            function toggle() {
+                if (select.value === 'Lainnya') {
+                    input.style.display = 'block';
+                    input.disabled = false;
+                } else {
+                    input.style.display = 'none';
+                    input.disabled = true;
+                    input.value = '';
+                }
+            }
+
+            toggle();
+            select.addEventListener('change', toggle);
+        });
+    </script>
+@endpush

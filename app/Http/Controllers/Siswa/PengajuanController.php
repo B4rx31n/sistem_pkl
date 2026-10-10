@@ -37,7 +37,17 @@ class PengajuanController extends Controller
             ->get()
             ->groupBy('lokasi');
 
-        return view('siswa.pengajuan.create', compact('siswa', 'jurusanList', 'industriByLokasi'));
+        // Daftar kota/daerah untuk pilihan tempat siswa.
+        // Diambil dari gabungan (unik) lokasi seluruh industri aktif, kecuali opsi "Lainnya".
+        $lokasiList = Industri::where('status', 'aktif')
+            ->whereNotNull('lokasi')
+            ->where('lokasi', '!=', '')
+            ->where('lokasi', '!=', 'Lainnya')
+            ->distinct()
+            ->orderBy('lokasi')
+            ->pluck('lokasi');
+
+        return view('siswa.pengajuan.create', compact('siswa', 'jurusanList', 'industriByLokasi', 'lokasiList'));
     }
 
     public function store(Request $request)

@@ -26,14 +26,14 @@
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Email Login</h3>
-                    <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $industri->user->email }}</p>
+                    <p class="text-lg font-semibold text-gray-900 dark:text-white">{{ $industri->user->email ?? '-' }}</p>
                 </div>
                 <div>
                     <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Password</h3>
                     <div class="flex items-center gap-2">
                         <p class="text-lg font-semibold text-gray-900 dark:text-white" id="password-display">
                             <span id="password-bullets">&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span>
-                            <span id="password-text" style="display:none;">{{ $industri->user->getReadablePassword() ?? 'Tidak tersedia' }}</span>
+                            <span id="password-text" style="display:none;">{{ $industri->user?->getReadablePassword() ?? 'Tidak tersedia' }}</span>
                         </p>
                         <button type="button" onclick="togglePassword()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                             <i class="fas fa-eye" id="eye-icon"></i>

@@ -31,7 +31,7 @@
                                     Email Login <span class="text-red-500">*</span>
                                 </label>
                                 <input type="email" name="email_login"
-                                    value="{{ old('email_login', $industri->user->email) }}" class="form-input"
+                                    value="{{ old('email_login', $industri->user->email ?? '') }}" class="form-input"
                                     placeholder="Untuk login ke sistem" required>
                                 @error('email_login')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
@@ -113,15 +113,29 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Lokasi / Kota <span class="text-red-500">*</span>
                                 </label>
-                                <select name="lokasi" class="form-input" required>
+                                @php
+                                    $standardLokasi = ['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta'];
+                                    $currentLokasi = old('lokasi', $industri->lokasi);
+                                    $isCustomLokasi = $currentLokasi && !in_array($currentLokasi, $standardLokasi) && $currentLokasi != 'Lainnya';
+                                    $selectedLokasi = $isCustomLokasi ? 'Lainnya' : $currentLokasi;
+                                @endphp
+                                <select name="lokasi" id="lokasiSelect" class="form-input" required>
                                     <option value="">Pilih Lokasi</option>
-                                    @foreach (['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta', 'Lainnya'] as $lok)
+                                    @foreach (array_merge($standardLokasi, ['Lainnya']) as $lok)
                                         <option value="{{ $lok }}"
-                                            {{ old('lokasi', $industri->lokasi) == $lok ? 'selected' : '' }}>
+                                            {{ $selectedLokasi == $lok ? 'selected' : '' }}>
                                             {{ $lok }}</option>
                                     @endforeach
                                 </select>
+                                <input type="text" name="lokasi_lainnya" id="lokasiLainnyaInput"
+                                    class="form-input mt-2 @error('lokasi_lainnya') is-invalid @enderror"
+                                    placeholder="Tulis nama kota/daerah..."
+                                    value="{{ old('lokasi_lainnya', $isCustomLokasi ? $currentLokasi : '') }}"
+                                    style="{{ $selectedLokasi == 'Lainnya' ? '' : 'display: none;' }}">
                                 @error('lokasi')
+                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                @enderror
+                                @error('lokasi_lainnya')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
@@ -226,3 +240,27 @@
         </div>
     </div>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const select = document.getElementById('lokasiSelect');
+            const input = document.getElementById('lokasiLainnyaInput');
+            if (!select || !input) return;
+
+            function toggle() {
+                if (select.value === 'Lainnya') {
+                    input.style.display = 'block';
+                    input.disabled = false;
+                } else {
+                    input.style.display = 'none';
+                    input.disabled = true;
+                    input.value = '';
+                }
+            }
+
+            toggle();
+            select.addEventListener('change', toggle);
+        });
+    </script>
+@endpush

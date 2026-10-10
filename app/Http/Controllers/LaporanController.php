@@ -35,6 +35,11 @@ class LaporanController extends Controller
                 });
             }
         }
+
+        // Guru & industri hanya melihat jurnal yang sudah disubmit siswa
+        if (in_array($user->role, ['guru', 'industri'])) {
+            $query->where('status', 'submitted');
+        }
         // Admin bisa melihat semua
 
         // Filter tanggal
@@ -341,6 +346,11 @@ class LaporanController extends Controller
                     $q->where('industri_id', $industri->id);
                 });
             }
+        }
+
+        // Guru & industri hanya melihat jurnal yang sudah disubmit siswa
+        if (in_array($user->role, ['guru', 'industri'])) {
+            $query->where('status', 'submitted');
         }
 
         if ($request->has('tanggal_mulai') && $request->tanggal_mulai != '') {

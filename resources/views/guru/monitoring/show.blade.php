@@ -100,15 +100,9 @@
                         <span class="text-lg font-semibold text-gray-800 dark:text-white">
                             {{ \Carbon\Carbon::parse($jurnal->tanggal)->format('d F Y') }}
                         </span>
-                        @if($jurnal->status == 'submitted')
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
-                                <i class="fas fa-check-circle mr-1"></i> Submitted
-                            </span>
-                        @else
-                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300">
-                                <i class="fas fa-pencil-alt mr-1"></i> Draft
-                            </span>
-                        @endif
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                            <i class="fas fa-check-circle mr-1"></i> Submitted
+                        </span>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 mt-2">{{ $jurnal->aktivitas }}</p>
                     @if($jurnal->dokumentasi)
