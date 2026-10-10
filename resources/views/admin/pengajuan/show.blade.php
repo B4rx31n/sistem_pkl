@@ -40,7 +40,7 @@
                             <p><strong>Pekerjaan Orang Tua:</strong> {{ $pengajuan->pekerjaan_orang_tua }}</p>
                         @endif
                         <p><strong>Penghasilan Orang Tua:</strong> Rp
-                            {{ number_format((int) str_replace('.', '', $pengajuan->penghasilan_ortu), 0, ',', '.') }}
+                            {{ number_format((int) str_replace('.', '', $pengajuan->penghasilan_ortu ?? ''), 0, ',', '.') }}
                         </p>
                         @if ($pengajuan->alamat)
                             <p><strong>Alamat Rumah:</strong> {{ $pengajuan->alamat }}</p>
