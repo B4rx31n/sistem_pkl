@@ -13,7 +13,7 @@ class KompetensiImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     public int $success = 0;
     public int $skipped = 0;
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
             $kode = trim((string) ($row['kode_kompetensi'] ?? ''));
@@ -32,8 +32,7 @@ class KompetensiImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             Kompetensi::create([
                 'kode_kompetensi' => $kode,
                 'nama_kompetensi' => $nama,
-                'kategori' => $row['kategori'] ?? 'Semua',
-                'deskripsi' => $row['deskripsi'] ?? null,
+                'deskripsi'       => $row['deskripsi'] ?? null,
             ]);
 
             $this->success++;

@@ -117,25 +117,32 @@
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Lokasi / Kota <span class="text-red-500">*</span>
                                 </label>
-                                <select name="lokasi" id="lokasiSelect" class="form-input" required>
+
+                                <select name="lokasi" id="lokasi" class="form-input" required
+                                    onchange="toggleLokasiLainnya()">
                                     <option value="">Pilih Lokasi</option>
                                     @foreach (['Padang', 'Bukittinggi', 'Padang Panjang', 'Lainnya'] as $lok)
                                         <option value="{{ $lok }}" {{ old('lokasi') == $lok ? 'selected' : '' }}>
-                                            {{ $lok }}</option>
+                                            {{ $lok }}
+                                        </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="lokasi_lainnya" id="lokasiLainnyaInput"
-                                    class="form-input mt-2 @error('lokasi_lainnya') is-invalid @enderror"
-                                    placeholder="Tulis nama kota/daerah..."
-                                    value="{{ old('lokasi_lainnya') }}"
-                                    style="{{ old('lokasi') == 'Lainnya' ? '' : 'display: none;' }}">
+
                                 @error('lokasi')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
-                                @error('lokasi_lainnya')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
+
+                                {{-- Input untuk "Lainnya" --}}
+                                <div id="wrapper-lokasi-lainnya"
+                                    class="mt-2 {{ old('lokasi') == 'Lainnya' ? '' : 'hidden' }}">
+                                    <input type="text" name="lokasi_lainnya" id="lokasi_lainnya" class="form-input"
+                                        placeholder="Tulis nama kota/daerah" value="{{ old('lokasi_lainnya') }}">
+                                    @error('lokasi_lainnya')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
+
                         </div>
                     </div>
 
@@ -177,7 +184,7 @@
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                            
+
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Penanggung Jawab <span class="text-red-500">*</span>
@@ -227,29 +234,25 @@
             </form>
         </div>
     </div>
+<script>
+    function toggleLokasiLainnya() {
+        const select = document.getElementById('lokasi');
+        const wrapper = document.getElementById('wrapper-lokasi-lainnya');
+        const input = document.getElementById('lokasi_lainnya');
+
+        if (select.value === 'Lainnya') {
+            wrapper.classList.remove('hidden');
+            input.setAttribute('required', 'required');
+        } else {
+            wrapper.classList.add('hidden');
+            input.removeAttribute('required');
+            input.value = '';
+        }
+    }
+
+    // Jalankan saat halaman pertama kali dimuat
+    document.addEventListener('DOMContentLoaded', toggleLokasiLainnya);
+</script>
 
 @endsection
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const select = document.getElementById('lokasiSelect');
-            const input = document.getElementById('lokasiLainnyaInput');
-            if (!select || !input) return;
-
-            function toggle() {
-                if (select.value === 'Lainnya') {
-                    input.style.display = 'block';
-                    input.disabled = false;
-                } else {
-                    input.style.display = 'none';
-                    input.disabled = true;
-                    input.value = '';
-                }
-            }
-
-            toggle();
-            select.addEventListener('change', toggle);
-        });
-    </script>
-@endpush

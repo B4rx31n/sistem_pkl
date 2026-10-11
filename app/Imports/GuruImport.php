@@ -15,11 +15,11 @@ class GuruImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     public int $success = 0;
     public int $skipped = 0;
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
-            $nip = trim((string) ($row['nip'] ?? ''));
-            $nama = trim((string) ($row['nama_guru'] ?? ''));
+            $nip   = trim((string) ($row['nip'] ?? ''));
+            $nama  = trim((string) ($row['nama_guru'] ?? ''));
             $email = trim((string) ($row['email'] ?? ''));
 
             if ($nip === '' || $nama === '' || $email === '') {
@@ -35,19 +35,19 @@ class GuruImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             $password = trim((string) ($row['password'] ?? 'password')) ?: 'password';
 
             $user = User::create([
-                'name' => $nama,
-                'email' => $email,
+                'name'     => $nama,
+                'email'    => $email,
                 'password' => Hash::make($password),
-                'role' => 'guru',
+                'role'     => 'guru',
             ]);
             $user->setPasswordCopy($password);
 
             Guru::create([
-                'user_id' => $user->id,
-                'nip' => $nip,
-                'nama_guru' => $nama,
+                'user_id'    => $user->id,
+                'nip'        => $nip,
+                'nama_guru'  => $nama,
                 'no_telepon' => $row['no_telepon'] ?? null,
-                'alamat' => $row['alamat'] ?? null,
+                'alamat'     => $row['alamat'] ?? null,
             ]);
 
             $this->success++;

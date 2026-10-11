@@ -109,35 +109,40 @@
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
+                            @php
+                                $standardLokasi = ['Padang', 'Bukittinggi', 'Padang Panjang'];
+                                $lokasiTerpilih = old('lokasi', $industri->lokasi ?? '');
+                                $isLainnya = $lokasiTerpilih && !in_array($lokasiTerpilih, $standardLokasi) && $lokasiTerpilih !== 'Lainnya';
+                            @endphp
                             <div>
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Lokasi / Kota <span class="text-red-500">*</span>
                                 </label>
-                                @php
-                                    $standardLokasi = ['Padang', 'Bukittinggi', 'Padang Panjang'];
-                                    $currentLokasi = old('lokasi', $industri->lokasi);
-                                    $isCustomLokasi = $currentLokasi && !in_array($currentLokasi, $standardLokasi) && $currentLokasi != 'Lainnya';
-                                    $selectedLokasi = $isCustomLokasi ? 'Lainnya' : $currentLokasi;
-                                @endphp
-                                <select name="lokasi" id="lokasiSelect" class="form-input" required>
+
+                                <select name="lokasi" id="lokasi" class="form-input" required
+                                    onchange="toggleLokasiLainnya()">
                                     <option value="">Pilih Lokasi</option>
                                     @foreach (array_merge($standardLokasi, ['Lainnya']) as $lok)
                                         <option value="{{ $lok }}"
-                                            {{ $selectedLokasi == $lok ? 'selected' : '' }}>
-                                            {{ $lok }}</option>
+                                            {{ (($isLainnya && $lok === 'Lainnya') || $lokasiTerpilih === $lok) ? 'selected' : '' }}>
+                                            {{ $lok }}
+                                        </option>
                                     @endforeach
                                 </select>
-                                <input type="text" name="lokasi_lainnya" id="lokasiLainnyaInput"
-                                    class="form-input mt-2 @error('lokasi_lainnya') is-invalid @enderror"
-                                    placeholder="Tulis nama kota/daerah..."
-                                    value="{{ old('lokasi_lainnya', $isCustomLokasi ? $currentLokasi : '') }}"
-                                    style="{{ $selectedLokasi == 'Lainnya' ? '' : 'display: none;' }}">
+
                                 @error('lokasi')
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
-                                @error('lokasi_lainnya')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
+
+                                {{-- Input untuk "Lainnya" --}}
+                                <div id="wrapper-lokasi-lainnya" class="mt-2 hidden">
+                                    <input type="text" name="lokasi_lainnya" id="lokasi_lainnya" class="form-input"
+                                        placeholder="Tulis nama kota/daerah"
+                                        value="{{ old('lokasi_lainnya', $isLainnya ? $lokasiTerpilih : '') }}">
+                                    @error('lokasi_lainnya')
+                                        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                                    @enderror
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -164,7 +169,7 @@
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12    mb-3">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Kategori Jurusan <span class="text-red-500">*</span>
                                 </label>
@@ -239,28 +244,24 @@
             </form>
         </div>
     </div>
-@endsection
+    @push('scripts')
+<script>
+    function toggleLokasiLainnya() {
+        const select  = document.getElementById('lokasi');
+        const wrapper = document.getElementById('wrapper-lokasi-lainnya');
+        const input   = document.getElementById('lokasi_lainnya');
 
-@push('scripts')
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const select = document.getElementById('lokasiSelect');
-            const input = document.getElementById('lokasiLainnyaInput');
-            if (!select || !input) return;
+        if (select.value === 'Lainnya') {
+            wrapper.classList.remove('hidden');
+            input.setAttribute('required', 'required');
+        } else {
+            wrapper.classList.add('hidden');
+            input.removeAttribute('required');
+            input.value = '';
+        }
+    }
 
-            function toggle() {
-                if (select.value === 'Lainnya') {
-                    input.style.display = 'block';
-                    input.disabled = false;
-                } else {
-                    input.style.display = 'none';
-                    input.disabled = true;
-                    input.value = '';
-                }
-            }
-
-            toggle();
-            select.addEventListener('change', toggle);
-        });
-    </script>
+    document.addEventListener('DOMContentLoaded', toggleLokasiLainnya);
+</script>
 @endpush
+@endsection

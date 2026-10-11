@@ -252,7 +252,7 @@
                                         </button>
                                     </form>
                                 </div>
-                            </div>
+te                            </div>
                         @else
                             <!-- DITOLAK MURNI (TANPA PENEMPATAN) -->
                             <div class="alert alert-danger mt-3 mb-0">
