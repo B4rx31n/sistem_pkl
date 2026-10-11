@@ -99,35 +99,41 @@
                     </div>
                 </div>
                 <div class="col-lg-6 hero-image text-center">
-                    <div class="hero-text-box"
-                        style="
-                                background: #4f46e5;
-                                border-radius: 12px;
-                                padding: 60px 30px;
-                                min-height: 400px;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                                color: white;
-                                width: 100%; ">
-                            <h1 style="
-                                font-size: 72px;
-                                font-weight: 700;
-                                letter-spacing: 4px;
-                                margin: 0;
-                                line-height: 1.1; "> LENTERA</h1>
-                        <p style="
-                                font-size: 18px;
-                                font-weight: 300;
-                                margin-top: 16px;
-                                max-width: 80%;
-                                letter-spacing: 0.5px;
-                                line-height: 1.6;
-                                opacity: 0.95; ">
-                            Layanan Ekosistem Navigasi Terpadu dan Evaluasi Relasi Aktivitas PKL</p>
-                    </div>
-                </div>
+    <div class="hero-text-box"
+        style="
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 16px;
+            padding: clamp(30px, 6vw, 60px) clamp(18px, 4vw, 30px);
+            min-height: clamp(240px, 45vw, 400px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(79, 70, 229, 0.35);">
+
+        <h1 style="
+            font-size: clamp(32px, 8vw, 72px);
+            font-weight: 700;
+            letter-spacing: clamp(2px, 0.6vw, 6px);
+            margin: 0;
+            line-height: 1.1;">
+            LENTERA
+        </h1>
+
+        <p style="
+            font-size: clamp(12.5px, 2.2vw, 18px);
+            font-weight: 300;
+            margin-top: clamp(10px, 2vw, 18px);
+            max-width: 90%;
+            letter-spacing: 0.5px;
+            line-height: 1.6;
+            opacity: 0.95;">
+            Layanan Ekosistem Navigasi Terpadu dan Evaluasi Relasi Aktivitas PKL
+        </p>
+    </div>
+</div>
             </div>
         </div>
     </section>
