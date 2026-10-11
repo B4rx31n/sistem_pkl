@@ -11,16 +11,20 @@
                 </h2>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Kelola data industri mitra PKL</p>
             </div>
-            <a href="{{ route('admin.industri.create') }}" class="btn-primary mt-3 sm:mt-0">
-                <i class="fas fa-plus mr-2"></i> Tambah Industri
-            </a>
+
             <div class="flex items-center gap-2 mt-3 sm:mt-0">
-                <form action="{{ route('admin.industri.import') }}" method="POST" enctype="multipart/form-data" class="flex items-center gap-2">
+                <form action="{{ route('admin.industri.import') }}" method="POST" enctype="multipart/form-data"
+                    class="flex items-center gap-2">
                     @csrf
                     <input type="file" name="file" accept=".xlsx,.xls,.csv" required class="form-input text-sm">
-                    <button type="submit" class="btn-info whitespace-nowrap"><i class="fas fa-file-import mr-1"></i> Import</button>
+                    <button type="submit" class="btn-info whitespace-nowrap"><i class="fas fa-file-import mr-1"></i>
+                        Import</button>
                 </form>
-                <a href="{{ route('admin.import.template', 'industri') }}" class="btn-danger whitespace-nowrap"><i class="fas fa-download mr-1"></i> Template</a>
+                <a href="{{ route('admin.import.template', 'industri') }}" class="btn-danger whitespace-nowrap"><i
+                        class="fas fa-download mr-1"></i> Template</a>
+                <a href="{{ route('admin.industri.create') }}" class="btn-primary">
+                    <i class="fas fa-plus mr-2"></i> Tambah Industri
+                </a>
             </div>
         </div>
 

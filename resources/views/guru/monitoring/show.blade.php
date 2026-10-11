@@ -77,14 +77,14 @@
             </div>
         </div>
     @else
-        <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-xl p-4 mb-6">
-            <div class="flex items-center">
-                <i class="fas fa-clock text-yellow-600 dark:text-yellow-400 mr-3"></i>
-                <p class="text-sm text-yellow-800 dark:text-yellow-200">
-                    Industri belum mengisi penilaian untuk siswa ini.
-                </p>
-            </div>
-        </div>
+        
+<div class="flex items-center gap-3 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5 mb-4
+            dark:border-amber-800 dark:bg-amber-900/20">
+    <i class="fas fa-clock text-gray-700 shrink-0"></i>
+    <p class="text-sm text-amber-800 dark:text-amber-200">
+        Industri belum mengisi penilaian untuk siswa ini.
+    </p>
+</div>
     @endif
 
     <!-- Jurnal List -->
@@ -92,7 +92,11 @@
         <i class="fas fa-book mr-2"></i> Jurnal Harian
     </h3>
 
-    @forelse($jurnals as $jurnal)
+        @php
+        $jurnalsSubmitted = $jurnals->filter(fn($j) => $j->status === 'submitted');
+    @endphp
+
+    @forelse($jurnalsSubmitted as $jurnal)
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-4">
             <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
                 <div>
@@ -100,15 +104,9 @@
                         <span class="text-lg font-semibold text-gray-800 dark:text-white">
                             {{ \Carbon\Carbon::parse($jurnal->tanggal)->format('d F Y') }}
                         </span>
-                        @if($jurnal->status == 'submitted')
-                            <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
-                                <i class="fas fa-check-circle mr-1"></i> Submitted
-                            </span>
-                        @else
-                            <span class="px-2 py-1 text-xs rounded-full bg-yellow-100 dark:bg-yellow-900 text-yellow-700 dark:text-yellow-300">
-                                <i class="fas fa-pencil-alt mr-1"></i> Draft
-                            </span>
-                        @endif
+                        <span class="px-2 py-1 text-xs rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300">
+                            <i class="fas fa-check-circle mr-1"></i> Submitted
+                        </span>
                     </div>
                     <p class="text-gray-600 dark:text-gray-400 mt-2">{{ $jurnal->aktivitas }}</p>
                     @if($jurnal->dokumentasi)
@@ -156,10 +154,9 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-12 text-center">
             <i class="fas fa-book-open text-6xl text-gray-300 dark:text-gray-600 mb-4"></i>
             <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300">Belum Ada Jurnal</h3>
-            <p class="text-gray-500 dark:text-gray-400 mt-2">Siswa belum mengisi jurnal</p>
+            <p class="text-gray-500 dark:text-gray-400 mt-2">Siswa belum mengisi atau mensubmit jurnal</p>
         </div>
     @endforelse
-
     <div class="mt-4">
         {{ $jurnals->withQueryString()->links() }}
     </div>

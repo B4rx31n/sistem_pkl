@@ -14,6 +14,7 @@ class PengajuanController extends Controller
     public function index()
     {
         $pengajuans = PengajuanPkl::with('siswa')->orderBy('created_at', 'desc')->paginate(10);
+        $kompetensis = \App\Models\Kompetensi::all();
         return view('admin.pengajuan.index', compact('pengajuans'));
     }
 
@@ -43,10 +44,7 @@ class PengajuanController extends Controller
             ->get();
 
         $gurus = \App\Models\Guru::all();
-        $kompetensis = \App\Models\Kompetensi::where(function ($q) use ($kategori) {
-            $q->where('kategori', $kategori)->orWhere('kategori', 'Semua');
-        })->get();
-
+        $kompetensis = Kompetensi::all();
         return view('admin.pengajuan.show', compact('pengajuan', 'industris', 'gurus', 'kompetensis'));
     }
 

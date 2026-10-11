@@ -109,22 +109,41 @@
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                    Lokasi / Kota <span class="text-red-500">*</span>
-                                </label>
-                                <select name="lokasi" class="form-input" required>
-                                    <option value="">Pilih Lokasi</option>
-                                    @foreach (['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta', 'Lainnya'] as $lok)
-                                        <option value="{{ $lok }}"
-                                            {{ old('lokasi', $industri->lokasi) == $lok ? 'selected' : '' }}>
-                                            {{ $lok }}</option>
-                                    @endforeach
-                                </select>
-                                @error('lokasi')
-                                    <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
-                                @enderror
-                            </div>
+                            @php
+    $daftarLokasi = ['Padang', 'Bandung', 'Yogyakarta', 'Pekanbaru', 'Batam', 'Jakarta'];
+    $lokasiTerpilih = old('lokasi', $industri->lokasi ?? '');
+    $isLainnya = $lokasiTerpilih && !in_array($lokasiTerpilih, $daftarLokasi);
+@endphp
+
+<div>
+    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        Lokasi / Kota <span class="text-red-500">*</span>
+    </label>
+
+    <select name="lokasi" id="lokasi" class="form-input" required onchange="toggleLokasiLainnya()">
+        <option value="">Pilih Lokasi</option>
+        @foreach (array_merge($daftarLokasi, ['Lainnya']) as $lok)
+            <option value="{{ $lok }}"
+                {{ ($isLainnya && $lok === 'Lainnya') || $lokasiTerpilih === $lok ? 'selected' : '' }}>
+                {{ $lok }}
+            </option>
+        @endforeach
+    </select>
+
+    @error('lokasi')
+        <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+    @enderror
+
+    {{-- Input untuk "Lainnya" --}}
+    <div id="wrapper-lokasi-lainnya" class="mt-2 hidden">
+        <input type="text" name="lokasi_lainnya" id="lokasi_lainnya" class="form-input"
+            placeholder="Tulis nama kota/daerah"
+            value="{{ old('lokasi_lainnya', $isLainnya ? $lokasiTerpilih : '') }}">
+        @error('lokasi_lainnya')
+            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+        @enderror
+    </div>
+</div>
                         </div>
                     </div>
 
@@ -150,7 +169,7 @@
                                     <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                                 @enderror
                             </div>
-                            <div class="col-md-6 mb-3">
+                            <div class="col-md-12    mb-3">
                                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                                     Kategori Jurusan <span class="text-red-500">*</span>
                                 </label>
@@ -225,4 +244,24 @@
             </form>
         </div>
     </div>
+    @push('scripts')
+<script>
+    function toggleLokasiLainnya() {
+        const select  = document.getElementById('lokasi');
+        const wrapper = document.getElementById('wrapper-lokasi-lainnya');
+        const input   = document.getElementById('lokasi_lainnya');
+
+        if (select.value === 'Lainnya') {
+            wrapper.classList.remove('hidden');
+            input.setAttribute('required', 'required');
+        } else {
+            wrapper.classList.add('hidden');
+            input.removeAttribute('required');
+            input.value = '';
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', toggleLokasiLainnya);
+</script>
+@endpush
 @endsection

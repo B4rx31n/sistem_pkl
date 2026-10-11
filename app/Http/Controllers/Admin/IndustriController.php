@@ -70,6 +70,7 @@ class IndustriController extends Controller
             'kode_perusahaan' => $request->kode_perusahaan,
             'nama_perusahaan' => $request->nama_perusahaan,
             'lokasi' => $request->lokasi,
+            'lokasi_lainnya'  => 'required_if:lokasi,Lainnya|nullable|string|max:100',
             'alamat' => $request->alamat,
             'no_telepon' => $request->no_telepon,
             'email' => $request->email,
@@ -80,6 +81,10 @@ class IndustriController extends Controller
             'kuota' => $request->kuota,
             'status' => $request->status,
         ]);
+
+        $lokasi = $request->lokasi === 'Lainnya'
+        ? $request->lokasi_lainnya
+        : $request->lokasi;
 
         return redirect()->route('admin.industri.index')
             ->with('success', 'Data industri berhasil ditambahkan.');
@@ -121,6 +126,7 @@ class IndustriController extends Controller
             'kode_perusahaan' => $data['kode_perusahaan'],
             'nama_perusahaan' => $data['nama_perusahaan'],
             'lokasi' => $data['lokasi'],
+            'lokasi_lainnya'  => 'required_if:lokasi,Lainnya|nullable|string|max:100',
             'alamat' => $data['alamat'],
             'no_telepon' => $data['no_telepon'],
             'email' => $data['email'] ?? null,

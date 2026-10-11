@@ -15,11 +15,11 @@ class SiswaImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
     public int $success = 0;
     public int $skipped = 0;
 
-    public function collection(Collection $rows)
+    public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
-            $nis = trim((string) ($row['nis'] ?? ''));
-            $nama = trim((string) ($row['nama_siswa'] ?? ''));
+            $nis   = trim((string) ($row['nis'] ?? ''));
+            $nama  = trim((string) ($row['nama_siswa'] ?? ''));
             $email = trim((string) ($row['email'] ?? ''));
 
             if ($nis === '' || $nama === '' || $email === '') {
@@ -35,20 +35,20 @@ class SiswaImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
             $password = trim((string) ($row['password'] ?? 'password')) ?: 'password';
 
             $user = User::create([
-                'name' => $nama,
-                'email' => $email,
+                'name'     => $nama,
+                'email'    => $email,
                 'password' => Hash::make($password),
-                'role' => 'siswa',
+                'role'     => 'siswa',
             ]);
             $user->setPasswordCopy($password);
 
             Siswa::create([
-                'user_id' => $user->id,
-                'nis' => $nis,
+                'user_id'    => $user->id,
+                'nis'        => $nis,
                 'nama_siswa' => $nama,
-                'jurusan' => $row['jurusan'] ?? 'XII RPL',
+                'jurusan'    => $row['jurusan'] ?? 'XII RPL',
                 'no_telepon' => $row['no_telepon'] ?? null,
-                'alamat' => $row['alamat'] ?? null,
+                'alamat'     => $row['alamat'] ?? null,
             ]);
 
             $this->success++;
