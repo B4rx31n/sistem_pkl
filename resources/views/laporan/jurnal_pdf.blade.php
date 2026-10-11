@@ -15,6 +15,8 @@
         .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
         .badge-submitted { background: #22c55e; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
         .badge-draft { background: #eab308; color: white; padding: 2px 8px; border-radius: 4px; font-size: 11px; }
+        .doc-img { width: 110px; height: auto; border: 1px solid #ddd; border-radius: 4px; }
+        .doc-empty { color: #999; font-size: 11px; }
     </style>
 </head>
 <body>
@@ -34,6 +36,7 @@
                 <th>NIS</th>
                 <th>Industri</th>
                 <th>Aktivitas</th>
+                <th>Dokumentasi</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -46,6 +49,31 @@
                     <td>{{ $jurnal->penempatan->siswa->nis }}</td>
                     <td>{{ $jurnal->penempatan->industri->nama_perusahaan }}</td>
                     <td>{{ $jurnal->aktivitas }}</td>
+                    <td style="text-align: center; padding: 4px;">
+                        @php
+                            $dokPath = $jurnal->dokumentasi ? storage_path('app/public/' . $jurnal->dokumentasi) : null;
+                            $dokUri = null;
+                            if ($dokPath && file_exists($dokPath)) {
+                                if (function_exists('mime_content_type')) {
+                                    $mime = mime_content_type($dokPath) ?: 'image/jpeg';
+                                } else {
+                                    $ext = strtolower(pathinfo($dokPath, PATHINFO_EXTENSION));
+                                    $mime = match ($ext) {
+                                        'png' => 'image/png',
+                                        'gif' => 'image/gif',
+                                        'webp' => 'image/webp',
+                                        default => 'image/jpeg',
+                                    };
+                                }
+                                $dokUri = 'data:' . $mime . ';base64,' . base64_encode(file_get_contents($dokPath));
+                            }
+                        @endphp
+                        @if ($dokUri)
+                            <img src="{{ $dokUri }}" class="doc-img" alt="Dokumentasi">
+                        @else
+                            <span class="doc-empty">-</span>
+                        @endif
+                    </td>
                     <td>
                         @if($jurnal->status == 'submitted')
                             <span class="badge-submitted">Submitted</span>
@@ -56,7 +84,7 @@
                 </tr>
             @empty
                 <tr>
-                    <td colspan="7" style="text-align:center;padding:40px;">Tidak ada data</td>
+                    <td colspan="8" style="text-align:center;padding:40px;">Tidak ada data</td>
                 </tr>
             @endforelse
         </tbody>

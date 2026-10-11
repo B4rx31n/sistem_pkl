@@ -370,6 +370,7 @@ class LaporanController extends Controller
         $jurnals = $query->orderBy('tanggal', 'desc')->get();
 
         $pdf = Pdf::loadView('laporan.jurnal_pdf', compact('jurnals'));
+        $pdf->setPaper('a4', 'landscape');
         return $pdf->download('laporan_jurnal_pkl.pdf');
     }
 

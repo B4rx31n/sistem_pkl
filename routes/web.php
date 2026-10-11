@@ -77,6 +77,8 @@ Route::middleware(['auth'])->group(function () {
 
         // Route Pengajuan untuk Admin
         Route::get('/pengajuan', [AdminPengajuanController::class, 'index'])->name('pengajuan.index');
+        Route::get('/pengajuan/export/pdf', [AdminPengajuanController::class, 'exportPdf'])->name('pengajuan.export.pdf');
+        Route::get('/pengajuan/export/excel', [AdminPengajuanController::class, 'exportExcel'])->name('pengajuan.export.excel');
         Route::get('/pengajuan/{id}', [AdminPengajuanController::class, 'show'])->name('pengajuan.show');
         Route::put('/pengajuan/{id}', [AdminPengajuanController::class, 'update'])->name('pengajuan.update');
 

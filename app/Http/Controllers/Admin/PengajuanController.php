@@ -2,20 +2,43 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Exports\PengajuanExport;
 use App\Http\Controllers\Controller;
 use App\Models\PengajuanPkl;
-use App\Models\Industri;
-use App\Models\Guru;
 use App\Models\Kompetensi;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
 
 class PengajuanController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $pengajuans = PengajuanPkl::with('siswa')->orderBy('created_at', 'desc')->paginate(10);
-        $kompetensis = \App\Models\Kompetensi::all();
-        return view('admin.pengajuan.index', compact('pengajuans'));
+        $pengajuans = $this->filteredQuery($request)->paginate(10)->withQueryString();
+        $jurusanList = $this->jurusanList();
+
+        return view('admin.pengajuan.index', compact('pengajuans', 'jurusanList'));
+    }
+
+    public function exportPdf(Request $request)
+    {
+        $pengajuans = $this->filteredQuery($request)->get();
+        $jurusan = $request->jurusan;
+
+        $pdf = Pdf::loadView('admin.pengajuan.export_pdf', compact('pengajuans', 'jurusan'));
+        $pdf->setPaper('a4', 'landscape');
+
+        return $pdf->download('pengajuan-pkl-' . now()->format('Ymd') . '.pdf');
+    }
+
+    public function exportExcel(Request $request)
+    {
+        $pengajuans = $this->filteredQuery($request)->get();
+
+        return Excel::download(
+            new PengajuanExport($pengajuans),
+            'pengajuan-pkl-' . now()->format('Ymd') . '.xlsx'
+        );
     }
 
     public function show($id)
@@ -69,5 +92,32 @@ class PengajuanController extends Controller
 
         return redirect()->route('admin.pengajuan.show', $pengajuan->id)
             ->with('success', 'Status pengajuan berhasil diperbarui.');
+    }
+
+    /**
+     * Query pengajuan dengan filter kelas (jurusan).
+     */
+    private function filteredQuery(Request $request)
+    {
+        $query = PengajuanPkl::with(['siswa', 'penempatan']);
+
+        if ($request->filled('jurusan')) {
+            $query->where('jurusan', $request->jurusan);
+        }
+
+        return $query->orderBy('created_at', 'desc');
+    }
+
+    /**
+     * Daftar kelas/jurusan yang tersedia untuk filter.
+     */
+    private function jurusanList()
+    {
+        return PengajuanPkl::query()
+            ->whereNotNull('jurusan')
+            ->where('jurusan', '!=', '')
+            ->distinct()
+            ->orderBy('jurusan')
+            ->pluck('jurusan');
     }
 }
