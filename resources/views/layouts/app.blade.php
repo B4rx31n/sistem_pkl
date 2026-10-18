@@ -1,12 +1,13 @@
 <!DOCTYPE html>
 <html lang="id">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Sistem PKL')</title>
-    
+
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
@@ -21,17 +22,18 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- Alpine.js -->
     <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+
     @stack('styles')
 </head>
-<body class="@if(session('theme') === 'dark') dark-mode @endif">
+
+<body class="@if (session('theme') === 'dark') dark-mode @endif">
     <div id="app">
         <!-- ============ SIDEBAR ============ -->
         @include('layouts.sidebar')
 
         <!-- ============ MAIN CONTENT ============ -->
         <div class="main-content">
-            
+
             <!-- ======================================== -->
             <!-- TOP HEADER (Sticky) -->
             <!-- ======================================== -->
@@ -41,7 +43,7 @@
                     <button class="sidebar-toggle" onclick="toggleSidebar()">
                         <i class="fas fa-bars"></i>
                     </button>
-                    
+
                     <div class="page-title">
                         <h4>@yield('page-title', 'Dashboard')</h4>
                         <small>@yield('page-subtitle', 'Overview PKL')</small>
@@ -63,14 +65,16 @@
                             <span class="d-none d-sm-inline">{{ Auth::user()->name }}</span>
                             <i class="fas fa-chevron-down text-muted ms-1" style="font-size: 10px;"></i>
                         </a>
-                        
+
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li>
                                 <a class="dropdown-item" href="{{ route('profile.edit') }}">
                                     <i class="fas fa-user me-2"></i> Profile
                                 </a>
                             </li>
-                            <li><hr class="dropdown-divider"></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
                             <li>
                                 <form action="{{ route('logout') }}" method="POST">
                                     @csrf
@@ -88,25 +92,25 @@
             <!-- CONTENT -->
             <!-- ======================================== -->
             <div class="content-wrapper">
-                @if(session('success'))
+                @if (session('success'))
                     <div class="alert alert-success alert-dismissible fade show" role="alert">
                         <i class="fas fa-check-circle me-2"></i> {{ session('success') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
-                
-                @if(session('error'))
+
+                @if (session('error'))
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="fas fa-exclamation-circle me-2"></i> {{ session('error') }}
                         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                     </div>
                 @endif
-                
-                @if($errors->any())
+
+                @if ($errors->any())
                     <div class="alert alert-danger alert-dismissible fade show" role="alert">
                         <i class="fas fa-exclamation-triangle me-2"></i>
                         <ul class="mb-0">
-                            @foreach($errors->all() as $error)
+                            @foreach ($errors->all() as $error)
                                 <li>{{ $error }}</li>
                             @endforeach
                         </ul>
@@ -122,6 +126,27 @@
     <!-- ============ SCRIPTS ============ -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Cek jika ada session 'error' dari Controller
+        @if (session('error'))
+            Swal.fire({
+                icon: 'warning',
+                title: 'Akses Ditolak',
+                text: "{{ session('error') }}",
+                confirmButtonColor: '#3085d6',
+                confirmButtonText: 'Mengerti'
+            });
+        @endif
+
+        // Cek jika ada session 'success' (opsional untuk notifikasi sukses)
+        @if (session('success'))
+            Swal.fire({
+                icon: 'success',
+                title: 'Berhasil',
+                text: "{{ session('success') }}",
+                timer: 3000,
+                showConfirmButton: false
+            });
+        @endif
         // Toggle Sidebar
         function toggleSidebar() {
             document.querySelector('.sidebar').classList.toggle('show');
@@ -131,7 +156,7 @@
         document.addEventListener('click', function(event) {
             const sidebar = document.querySelector('.sidebar');
             const toggleBtn = document.querySelector('.sidebar-toggle');
-            
+
             if (window.innerWidth <= 992) {
                 if (sidebar && toggleBtn) {
                     if (!sidebar.contains(event.target) && !toggleBtn.contains(event.target)) {
@@ -145,7 +170,7 @@
         function toggleTheme() {
             const body = document.body;
             const icon = document.getElementById('themeIcon');
-            
+
             if (body.classList.contains('dark-mode')) {
                 body.classList.remove('dark-mode');
                 if (icon) {
@@ -168,7 +193,7 @@
             const theme = localStorage.getItem('theme') || 'light';
             const body = document.body;
             const icon = document.getElementById('themeIcon');
-            
+
             if (theme === 'dark') {
                 body.classList.add('dark-mode');
                 if (icon) {
@@ -207,7 +232,9 @@
             if (!cards.length) return;
 
             if (!('IntersectionObserver' in window)) {
-                cards.forEach(function(el) { el.classList.add('revealed'); });
+                cards.forEach(function(el) {
+                    el.classList.add('revealed');
+                });
                 return;
             }
 
@@ -226,14 +253,18 @@
                         observer.unobserve(entry.target);
                     }
                 });
-            }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+            }, {
+                threshold: 0.08,
+                rootMargin: '0px 0px -30px 0px'
+            });
 
             cards.forEach(function(el) {
                 if (el.classList.contains('reveal')) observer.observe(el);
             });
         })();
     </script>
-    
+
     @stack('scripts')
 </body>
+
 </html>

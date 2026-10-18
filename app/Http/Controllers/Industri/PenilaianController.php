@@ -66,66 +66,70 @@ class PenilaianController extends Controller
         ));
     }
 
-    public function store(Request $request, $penempatan_id)
+        public function store(Request $request, $penempatan_id)
     {
-        $user = auth()->user();
-        $industri = $user->industri;
+        $penempatan = PenempatanPkl::findOrFail($penempatan_id);
 
-        $penempatan = PenempatanPkl::with('siswa')
-            ->where('industri_id', $industri->id)
-            ->where('status', 'aktif')
-            ->findOrFail($penempatan_id);
+        // Validasi akses (pastikan industri ini memang membimbing siswa tersebut)
+        if ($penempatan->industri_id != auth()->user()->industri->id) {
+            abort(403, 'Anda tidak memiliki akses ke data ini.');
+        }
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
-
-        $templates = TemplatePenilaian::active()
-            ->where('tipe', 'item')
-            ->forJurusan($siswaJurusan)
-            ->get();
-
+        // Pastikan menggunakan model TemplatePenilaian yang sesuai
+        $templates = \App\Models\TemplatePenilaian::active()->where('tipe', 'item')->forJurusan($siswaJurusan)->get();
+        
         $saved = 0;
-        $hasAny = false;
+        $deleted = 0;
 
         foreach ($templates as $template) {
             $nilaiKey = 'nilai_' . $template->id;
-            if ($request->has($nilaiKey) && $request->input($nilaiKey) !== null && $request->input($nilaiKey) !== '') {
-                $nilaiVal = (int) $request->input($nilaiKey);
-
-                $request->validate([
-                    $nilaiKey => 'required|integer|min:0|max:100',
-                ]);
-
-                $hasAny = true;
-                $catatanKey = 'catatan_' . $template->id;
-                $catatan = $request->input($catatanKey, null);
-
-                MonitoringNilai::updateOrCreate(
-                    [
-                        'penempatan_id' => $penempatan->id,
-                        'aspek_penilaian' => $template->nama_aspek,
-                        'role_penilai' => 'industri',
-                    ],
-                    [
-                        'guru_id' => $penempatan->guru_id,
-                        'nilai' => $nilaiVal,
-                        'catatan' => $catatan,
-                        'is_hidden_from_siswa' => false,
-                        'tanggal_penilaian' => now()->toDateString(),
-                    ]
-                );
-                $saved++;
+            $nilaiVal = $request->input($nilaiKey);
+            
+            // === PERUBAHAN: Jika nilai kosong (null/string kosong), hapus dari database ===
+            if ($nilaiVal === null || $nilaiVal === '') {
+                $deletedCount = \App\Models\MonitoringNilai::where('penempatan_id', $penempatan->id)
+                    ->where('aspek_penilaian', $template->nama_aspek)
+                    ->where('role_penilai', 'industri')
+                    ->delete();
+                
+                if ($deletedCount > 0) {
+                    $deleted++;
+                }
+                continue; // Lanjut ke template berikutnya
             }
+
+            // Validasi nilai jika diisi
+            $request->validate([
+                $nilaiKey => 'integer|min:0|max:100',
+            ]);
+
+            $catatanKey = 'catatan_' . $template->id;
+            $catatan = $request->input($catatanKey, null);
+
+            \App\Models\MonitoringNilai::updateOrCreate(
+                [
+                    'penempatan_id' => $penempatan->id,
+                    'aspek_penilaian' => $template->nama_aspek,
+                    'role_penilai' => 'industri',
+                ],
+                [
+                    'industri_id' => auth()->user()->industri->id,
+                    'nilai' => (int) $nilaiVal,
+                    'catatan' => $catatan,
+                    'is_hidden_from_siswa' => false,
+                    'tanggal_penilaian' => now()->toDateString(),
+                ]
+            );
+            $saved++;
         }
 
-        if (!$hasAny) {
-            return back()->with('error', 'Minimal satu nilai harus diisi.');
+        // Pesan Feedback
+        if ($saved > 0 || $deleted > 0) {
+            return redirect()->route('industri.penilaian.index')
+                ->with('success', "Berhasil memproses penilaian. Disimpan: {$saved}, Dikosongkan: {$deleted}.");
         }
 
-        if ($saved > 0) {
-            return redirect()->route('industri.penilaian.show', $penempatan->id)
-                ->with('success', "Berhasil menyimpan {$saved} penilaian.");
-        }
-
-        return back()->with('error', 'Tidak ada nilai yang disimpan.');
+        return redirect()->back()->with('info', 'Tidak ada perubahan nilai.');
     }
 }

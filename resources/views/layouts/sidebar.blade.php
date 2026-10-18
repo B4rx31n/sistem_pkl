@@ -103,13 +103,13 @@
                     </a>
                 </div>
 
-                <div class="nav-item">
+                {{-- <div class="nav-item">
                     <a href="{{ route('guru.kesimpulan.index') }}"
                         class="nav-link {{ request()->routeIs('guru.kesimpulan.*') ? 'active' : '' }}">
                         <i class="fas fa-award"></i>
                         <span>Kesimpulan Akhir</span>
                     </a>
-                </div>
+                </div> --}}
             @elseif(auth()->user()->role == 'siswa')
                 @if (session('login_mode') === 'pengajuan')
                     <div class="menu-label">Pengajuan</div>
@@ -165,26 +165,9 @@
                 </div>
             @endif
 
-            {{-- ========== BAGIAN LAPORAN (hanya untuk Guru dan Siswa non-pengajuan) ========== --}}
-            @if (in_array(auth()->user()->role, ['guru', 'siswa']) &&
-                    !(auth()->user()->role == 'siswa' && session('login_mode') === 'pengajuan'))
+            {{-- ========== BAGIAN LAPORAN untuk GURU ========== --}}
+            @if (auth()->user()->role == 'guru')
                 <div class="menu-label">Laporan</div>
-
-                <div class="nav-item">
-                    <a href="{{ route('laporan.jurnal') }}"
-                        class="nav-link {{ request()->routeIs('laporan.jurnal') ? 'active' : '' }}">
-                        <i class="fas fa-file-alt"></i>
-                        <span>Laporan Jurnal</span>
-                    </a>
-                </div>
-
-                <div class="nav-item">
-                    <a href="{{ route('laporan.nilai') }}"
-                        class="nav-link {{ request()->routeIs('laporan.nilai') ? 'active' : '' }}">
-                        <i class="fas fa-file-pdf"></i>
-                        <span>Laporan Nilai</span>
-                    </a>
-                </div>
 
                 <div class="nav-item">
                     <a href="{{ route('laporan.pkl') }}"
@@ -195,6 +178,45 @@
                 </div>
             @endif
 
+            {{-- BAGIAN LAPORAN untuk SISWA (non-pengajuan) --}}
+            @if (auth()->user()->role == 'siswa' && session('login_mode') !== 'pengajuan')
+                @php
+                    // Cek apakah siswa sudah punya nilai dari Guru ATAU Industri
+                    $sudahDinilai = \App\Models\MonitoringNilai::whereHas('penempatan', function ($q) {
+                        $q->where('siswa_id', auth()->user()->siswa->id ?? 0);
+                    })->exists();
+                @endphp
+
+                <div class="menu-label">Laporan</div>
+
+                <div class="nav-item">
+                    <a href="{{ route('laporan.jurnal') }}"
+                        class="nav-link {{ request()->routeIs('laporan.jurnal') ? 'active' : '' }}">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Laporan Jurnal</span>
+                    </a>
+                </div>
+
+                {{-- Menu Laporan PKL dengan sistem Gembok --}}
+                @if ($sudahDinilai)
+                    <div class="nav-item">
+                        <a href="{{ route('laporan.pkl') }}"
+                            class="nav-link {{ request()->routeIs('laporan.pkl*') ? 'active' : '' }}">
+                            <i class="fas fa-clipboard-list"></i>
+                            <span>Laporan PKL</span>
+                        </a>
+                    </div>
+                @else
+                    <div class="nav-item">
+                        <a href="javascript:void(0)" class="nav-link opacity-50 cursor-not-allowed"
+                            title="Laporan PKL tersedia setelah penilaian"
+                            onclick="Swal.fire({icon: 'warning', title: 'Akses Ditolak', text: 'Laporan PKL belum tersedia. Menunggu penilaian dari pihak industri atau guru.'});">
+                            <i class="fas fa-lock"></i>
+                            <span>Laporan PKL</span>
+                        </a>
+                    </div>
+                @endif
+            @endif
             {{-- ========== BAGIAN AKUN (untuk semua kecuali siswa mode pengajuan) ========== --}}
             @if (!(auth()->user()->role == 'siswa' && session('login_mode') === 'pengajuan'))
                 <div class="menu-label" style="margin-top:20px;">Akun</div>

@@ -269,12 +269,15 @@ function updateHuruf(input) {
 function hitungRataRata(kategori) {
     const inputs = document.querySelectorAll(`input[data-kategori="${kategori}"]`);
     let total = 0, count = 0;
+    
     inputs.forEach(inp => {
-        if (inp.value !== '') {
+        // Pastikan input tidak kosong dan berupa angka
+        if (inp.value !== '' && !isNaN(inp.value)) {
             total += parseInt(inp.value);
             count++;
         }
     });
+    
     document.getElementById('jumlah-' + kategori).textContent = count > 0 ? total : '-';
     document.getElementById('rata-' + kategori).textContent = count > 0 ? (total / count).toFixed(1) : '-';
     document.getElementById('huruf-' + kategori).textContent = count > 0 ? nilaiToHuruf(Math.round(total / count)) : '-';

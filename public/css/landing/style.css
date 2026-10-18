@@ -566,6 +566,94 @@ body {
     }
 }
 
+/* Features Section */
+.features-section {
+    padding: 60px 0;
+    background-color: #f8f9fa; /* Opsional: sesuaikan dengan tema Anda */
+}
+
+.features-section h2 {
+    font-size: 2.2rem;
+    color: #1a1a1a;
+}
+
+/* Card Styling */
+.feature-card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 30px 24px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.03);
+    display: flex;
+    flex-direction: column;
+    height: 100%; /* Memastikan semua card sama tinggi */
+}
+
+/* Efek Hover */
+.feature-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    border-color: rgba(13, 110, 253, 0.2);
+}
+
+/* Ikon */
+.feature-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+/* Teks */
+.feature-card h5 {
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+    color: #2d3748;
+}
+
+.feature-card p {
+    font-size: 0.9rem;
+    color: #718096;
+    line-height: 1.6;
+    flex-grow: 1; /* Mendorong tombol Selengkapnya ke bawah */
+}
+
+/* Link Selengkapnya */
+.detail-link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: #0d6efd;
+    text-decoration: none;
+    margin-top: 15px;
+    display: inline-block;
+}
+
+/* Penyesuaian Responsif untuk HP */
+@media (max-width: 576px) {
+    .features-section {
+        padding: 40px 0;
+    }
+
+    .feature-card {
+        padding: 20px;
+        text-align: center; /* Teks rata tengah di HP agar lebih rapi */
+    }
+
+    .feature-icon {
+        margin: 0 auto 15px auto; /* Ikon di tengah */
+    }
+
+    .features-section h2 {
+        font-size: 1.8rem;
+    }
+}
+
 /* ============ POPUP FULL LAYAR ============ */
 .popup-overlay {
     position: fixed;
