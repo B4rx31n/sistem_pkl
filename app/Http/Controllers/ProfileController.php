@@ -45,6 +45,17 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Jangan izinkan hapus akun yang masih punya penempatan PKL —
+        // mencegah riwayat PKL (jurnal, nilai) ikut terhapus.
+        $hasPenempatan = ($user->guru && $user->guru->penempatan()->exists())
+            || ($user->siswa && $user->siswa->penempatan()->exists())
+            || ($user->industri && $user->industri->penempatan()->exists());
+
+        if ($hasPenempatan) {
+            return Redirect::route('profile.edit')
+                ->with('error', 'Akun tidak dapat dihapus karena masih memiliki penempatan PKL. Hubungi admin terlebih dahulu.');
+        }
+
         Auth::logout();
 
         $user->delete();

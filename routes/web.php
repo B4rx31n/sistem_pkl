@@ -24,37 +24,33 @@ Route::get('/', [LandingPageController::class, 'index'])->name('landing');
 
 // Login Siswa (Publik - bisa diakses tanpa login)
 Route::get('/login-siswa', [LoginSiswaController::class, 'showLoginForm'])->name('login.siswa.form');
-Route::post('/login-siswa', [LoginSiswaController::class, 'login'])->name('login.siswa');
+Route::post('/login-siswa', [LoginSiswaController::class, 'login'])->middleware('throttle:10,1')->name('login.siswa');
 
 // Login Industri (Publik - bisa diakses tanpa login)
 Route::get('/login-industri', [LoginIndustriController::class, 'showLoginForm'])->name('login.industri.form');
-Route::post('/login-industri', [LoginIndustriController::class, 'login'])->name('login.industri');
+Route::post('/login-industri', [LoginIndustriController::class, 'login'])->middleware('throttle:10,1')->name('login.industri');
 
 // Verifikasi Password 2 Langkah (Publik, butuh sesi pending dari login tahap 1)
 Route::get('/konfirmasi-password', [\App\Http\Controllers\Auth\TwoStepLoginController::class, 'show'])->name('password.twostep.form');
 Route::post('/konfirmasi-password', [\App\Http\Controllers\Auth\TwoStepLoginController::class, 'confirm'])->name('password.twostep.confirm');
 Route::post('/konfirmasi-password/batal', [\App\Http\Controllers\Auth\TwoStepLoginController::class, 'cancel'])->name('password.twostep.cancel');
 
-// Route Dashboard (Fallback) - tetap untuk redirect setelah login
-Route::get('/dashboard', function () {
-    if (!auth()->check()) {
-        return redirect()->route('login');
-    }
-
-    $user = auth()->user();
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    } elseif ($user->role === 'guru') {
-        return redirect()->route('guru.monitoring.index');
-    } elseif ($user->role === 'siswa') {
-        return redirect()->route('siswa.jurnal.index');
-    } elseif ($user->role === 'industri') {
-        return redirect()->route('industri.dashboard');
-    }
-    return redirect('/');
-})->name('dashboard');
-
 Route::middleware(['auth'])->group(function () {
+
+    // Route Dashboard (Fallback) - tetap untuk redirect setelah login
+    Route::get('/dashboard', function () {
+        $user = auth()->user();
+        if ($user->role === 'admin') {
+            return redirect()->route('admin.dashboard');
+        } elseif ($user->role === 'guru') {
+            return redirect()->route('guru.monitoring.index');
+        } elseif ($user->role === 'siswa') {
+            return redirect()->route('siswa.jurnal.index');
+        } elseif ($user->role === 'industri') {
+            return redirect()->route('industri.dashboard');
+        }
+        return redirect('/');
+    })->name('dashboard');
 
     // ==================== ADMIN ROUTES ====================
     Route::middleware(['role:admin'])->prefix('admin')->name('admin.')->group(function () {
@@ -72,8 +68,6 @@ Route::middleware(['auth'])->group(function () {
         Route::post('/template-penilaian/add-sub-item', [\App\Http\Controllers\Admin\TemplatePenilaianController::class, 'addSubItem'])->name('template-penilaian.add-sub-item');
         Route::post('/template-penilaian/add-item', [\App\Http\Controllers\Admin\TemplatePenilaianController::class, 'addItem'])->name('template-penilaian.add-item');
         Route::post('/template-penilaian/store-table', [\App\Http\Controllers\Admin\TemplatePenilaianController::class, 'storeTable'])->name('template-penilaian.store-table');
-        Route::delete('/template-penilaian/destroy-table', [\App\Http\Controllers\Admin\TemplatePenilaianController::class, 'destroyTable'])->name('template-penilaian.destroy-table');
-        Route::post('/template-penilaian/{templatePenilaian}/update-inline', [App\Http\Controllers\Admin\TemplatePenilaianController::class, 'updateInline'])->name('admin.template-penilaian.update-inline');
 
         // Route Pengajuan untuk Admin
         Route::get('/pengajuan', [AdminPengajuanController::class, 'index'])->name('pengajuan.index');

@@ -88,70 +88,79 @@ class PenempatanController extends Controller
             return back()->with('error', 'Data siswa tidak sesuai dengan pengajuan.');
         }
 
-        // Handle industri "Lainnya" - buat record industri baru
-        if ($request->industri_id === 'lainnya') {
-            $request->validate([
-                'industri_lainnya' => 'required|string|max:255',
-            ], [
-                'industri_lainnya.required' => 'Nama kota/daerah industri lainnya wajib diisi.',
-            ]);
+        try {
+            $penempatan = \Illuminate\Support\Facades\DB::transaction(function () use ($request, $pengajuan) {
+                // Handle industri "Lainnya" - buat record industri baru
+                if ($request->industri_id === 'lainnya') {
+                    $request->validate([
+                        'industri_lainnya' => 'required|string|max:255',
+                    ], [
+                        'industri_lainnya.required' => 'Nama kota/daerah industri lainnya wajib diisi.',
+                    ]);
 
-            $kategori = $pengajuan->siswa->kategori_jurusan ?? 'Semua';
+                    $kategori = $pengajuan->siswa->kategori_jurusan ?? 'Semua';
 
-            $industri = Industri::create([
-                'kode_perusahaan' => 'LAINNYA-' . strtoupper(uniqid()),
-                'nama_perusahaan' => 'Industri di ' . $request->industri_lainnya,
-                'lokasi' => $request->industri_lainnya,
-                'alamat' => $request->industri_lainnya,
-                'no_telepon' => '-',
-                'email' => '-',
-                'bidang_usaha' => '-',
-                'jurusan' => $kategori,
-                'kategori' => $kategori,
-                'penanggung_jawab' => '-',
-                'kuota' => 1,
-                'status' => 'aktif',
-            ]);
-        } else {
-            // Pastikan id industri valid
-            $request->validate([
-                'industri_id' => 'exists:industris,id',
-            ], [
-                'industri_id.exists' => 'Industri tidak valid.',
-            ]);
+                    $industri = Industri::create([
+                        'kode_perusahaan' => 'LAINNYA-' . strtoupper(uniqid()),
+                        'nama_perusahaan' => 'Industri di ' . $request->industri_lainnya,
+                        'lokasi' => $request->industri_lainnya,
+                        'alamat' => $request->industri_lainnya,
+                        'no_telepon' => '-',
+                        'email' => '-',
+                        'bidang_usaha' => '-',
+                        'jurusan' => $kategori,
+                        'kategori' => $kategori,
+                        'penanggung_jawab' => '-',
+                        'kuota' => 1,
+                        'status' => 'aktif',
+                    ]);
+                } else {
+                    // Pastikan id industri valid
+                    $request->validate([
+                        'industri_id' => 'exists:industris,id',
+                    ], [
+                        'industri_id.exists' => 'Industri tidak valid.',
+                    ]);
 
-            // Ambil data industri untuk pengecekan kuota
-            $industri = Industri::findOrFail($request->industri_id);
+                    // Lock baris industri selama transaksi agar dua admin yang
+                    // submit bersamaan tidak bisa melewati kuota (race condition)
+                    $industri = Industri::whereKey($request->industri_id)->lockForUpdate()->firstOrFail();
 
-            // CEK 5: Cek kuota industri
-            $penempatanAktif = PenempatanPkl::where('industri_id', $industri->id)
-                ->where('status', 'aktif')
-                ->count();
+                    // CEK 5: Cek kuota industri (di dalam lock)
+                    $penempatanAktif = PenempatanPkl::where('industri_id', $industri->id)
+                        ->where('status', 'aktif')
+                        ->count();
 
-            if ($penempatanAktif >= $industri->kuota) {
-                return back()->with('error', 'Kuota industri sudah penuh. Sisa kuota: 0');
-            }
+                    if ($penempatanAktif >= $industri->kuota) {
+                        throw new \App\Exceptions\KuotaPenuhException('Kuota industri sudah penuh. Sisa kuota: 0');
+                    }
+                }
+
+                // Create penempatan
+                $penempatan = PenempatanPkl::create([
+                    'siswa_id' => $request->siswa_id,
+                    'industri_id' => $industri->id,
+                    'guru_id' => $request->guru_id,
+                    'kompetensi_id' => $request->kompetensi_id,
+                    'tanggal_mulai' => $request->tanggal_mulai,
+                    'tanggal_selesai' => $request->tanggal_selesai,
+                    'status' => $request->status,
+                ]);
+
+                // Update pengajuan dengan penempatan_id
+                $pengajuan->penempatan_id = $penempatan->id;
+
+                // Tempat diterima otomatis mengikuti wilayah (lokasi) industri penempatan.
+                // Wilayah industri sudah ditentukan saat data industri dibuat.
+                $pengajuan->tempat_diterima = $industri->lokasi;
+
+                $pengajuan->save();
+
+                return $penempatan;
+            });
+        } catch (\App\Exceptions\KuotaPenuhException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        // Create penempatan
-        $penempatan = PenempatanPkl::create([
-            'siswa_id' => $request->siswa_id,
-            'industri_id' => $industri->id,
-            'guru_id' => $request->guru_id,
-            'kompetensi_id' => $request->kompetensi_id,
-            'tanggal_mulai' => $request->tanggal_mulai,
-            'tanggal_selesai' => $request->tanggal_selesai,
-            'status' => $request->status,
-        ]);
-
-        // Update pengajuan dengan penempatan_id
-        $pengajuan->penempatan_id = $penempatan->id;
-
-        // Tempat diterima otomatis mengikuti wilayah (lokasi) industri penempatan.
-        // Wilayah industri sudah ditentukan saat data industri dibuat.
-        $pengajuan->tempat_diterima = $industri->lokasi;
-
-        $pengajuan->save();
 
         return redirect()->route('admin.pengajuan.show', $pengajuan->id)
             ->with('success', 'Penempatan berhasil dibuat untuk siswa ini.');
@@ -186,16 +195,18 @@ class PenempatanController extends Controller
         // Cari pengajuan yang memiliki penempatan ini
         $pengajuan = PengajuanPkl::where('penempatan_id', $id)->first();
 
-        if ($pengajuan) {
-            // Update pengajuan: hapus penempatan_id dan ubah status ke pending
-            $pengajuan->penempatan_id = null;
-            $pengajuan->status = 'pending';
-            $pengajuan->tempat_diterima = null;
-            $pengajuan->save();
-        }
+        \Illuminate\Support\Facades\DB::transaction(function () use ($penempatan, $pengajuan, $id) {
+            if ($pengajuan) {
+                // Update pengajuan: hapus penempatan_id dan ubah status ke pending
+                $pengajuan->penempatan_id = null;
+                $pengajuan->status = 'pending';
+                $pengajuan->tempat_diterima = null;
+                $pengajuan->save();
+            }
 
-        // Hapus penempatan
-        $penempatan->delete();
+            // Hapus penempatan (jurnal & nilai terkait ikut terhapus via cascade)
+            $penempatan->delete();
+        });
 
         // Cek dari mana request berasal
         if ($pengajuan) {

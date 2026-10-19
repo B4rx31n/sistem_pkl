@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginIndustriController extends Controller
 {
@@ -20,17 +22,31 @@ class LoginIndustriController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Batasi percobaan login per IP+identitas (anti brute-force)
+        $throttleKey = 'login-industri:' . md5(strtolower($request->email) . '|' . $request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'email' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+            ]);
+        }
+
         $user = \App\Models\User::where('email', $request->email)
             ->where('role', 'industri')
             ->first();
 
-        if (!$user) {
-            return back()->withErrors(['email' => 'Akun industri tidak ditemukan.']);
+        // Pesan error diseragamkan agar email valid/tidak tidak bisa dibedakan
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            throw ValidationException::withMessages([
+                'email' => 'Email atau password salah.',
+            ]);
         }
 
-        if (!Hash::check($request->password, $user->password)) {
-            return back()->withErrors(['password' => 'Password salah.']);
-        }
+        RateLimiter::clear($throttleKey);
 
         Auth::login($user);
         $request->session()->regenerate();

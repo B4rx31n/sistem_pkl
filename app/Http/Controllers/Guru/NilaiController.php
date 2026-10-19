@@ -50,7 +50,7 @@ class NilaiController extends Controller
         }
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
-        $templates = TemplatePenilaian::active()->forJurusan($siswaJurusan)->orderBy('kategori')->orderBy('urutan')->get();
+        $templates = TemplatePenilaian::active()->forJurusan($siswaJurusan)->with('children')->orderBy('kategori')->orderBy('urutan')->get();
         $kejuruanRoot = $templates->where('kategori', 'kejuruan')->whereNull('parent_id')->sortBy('urutan');
         $sikapItems = $templates->where('kategori', 'sikap')->sortBy('urutan');
 
@@ -76,50 +76,53 @@ class NilaiController extends Controller
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
         $templates = TemplatePenilaian::active()->where('tipe', 'item')->forJurusan($siswaJurusan)->get();
-        $saved = 0;
-        $hasAny = false;
 
-        foreach ($templates as $template) {
-            $nilaiKey = 'nilai_' . $template->id;
-            if ($request->has($nilaiKey) && $request->input($nilaiKey) !== null && $request->input($nilaiKey) !== '') {
-                $nilaiVal = (int) $request->input($nilaiKey);
+        // Transaksi: semua nilai tersimpan atomik (gagal di tengah = tidak
+        // menyisakan data setengah jadi)
+        \Illuminate\Support\Facades\DB::transaction(function () use ($templates, $request, $penempatan) {
+            foreach ($templates as $template) {
+                $nilaiKey = 'nilai_' . $template->id;
+                if ($request->has($nilaiKey) && $request->input($nilaiKey) !== null && $request->input($nilaiKey) !== '') {
+                    $nilaiVal = (int) $request->input($nilaiKey);
 
-                $request->validate([
-                    $nilaiKey => 'required|integer|min:0|max:100',
-                ]);
+                    $request->validate([
+                        $nilaiKey => 'required|integer|min:0|max:100',
+                    ]);
 
-                $hasAny = true;
-                $catatanKey = 'catatan_' . $template->id;
-                $catatan = $request->input($catatanKey, null);
+                    $catatanKey = 'catatan_' . $template->id;
+                    $catatan = $request->input($catatanKey, null);
+                    if (is_array($catatan)) {
+                        $catatan = null;
+                    }
 
-                MonitoringNilai::updateOrCreate(
-                    [
-                        'penempatan_id' => $penempatan->id,
-                        'aspek_penilaian' => $template->nama_aspek,
-                        'role_penilai' => 'guru',
-                    ],
-                    [
-                        'guru_id' => auth()->user()->guru->id,
-                        'nilai' => $nilaiVal,
-                        'catatan' => $catatan,
-                        'is_hidden_from_siswa' => false,
-                        'tanggal_penilaian' => now()->toDateString(),
-                    ]
-                );
-                $saved++;
+                    MonitoringNilai::updateOrCreate(
+                        [
+                            'penempatan_id' => $penempatan->id,
+                            'aspek_penilaian' => $template->nama_aspek,
+                            'role_penilai' => 'guru',
+                        ],
+                        [
+                            'guru_id' => auth()->user()->guru->id,
+                            'nilai' => $nilaiVal,
+                            'catatan' => $catatan,
+                            'is_hidden_from_siswa' => false,
+                            'tanggal_penilaian' => now()->toDateString(),
+                        ]
+                    );
+                }
             }
-        }
+        });
 
-        if (!$hasAny) {
+        $saved = MonitoringNilai::where('penempatan_id', $penempatan->id)
+            ->where('role_penilai', 'guru')
+            ->count();
+
+        if ($saved == 0) {
             return back()->with('error', 'Minimal satu nilai harus diisi.');
         }
 
-        if ($saved > 0) {
-            return redirect()->route('guru.nilai.show', $penempatan->id)
-                ->with('success', "Berhasil menyimpan {$saved} penilaian.");
-        }
-
-        return back()->with('error', 'Tidak ada nilai yang disimpan.');
+        return redirect()->route('guru.nilai.show', $penempatan->id)
+            ->with('success', "Berhasil menyimpan {$saved} penilaian.");
     }
 
     public function show($penempatan_id)
@@ -132,7 +135,7 @@ class NilaiController extends Controller
         }
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
-        $templates = TemplatePenilaian::active()->forJurusan($siswaJurusan)->orderBy('kategori')->orderBy('urutan')->get();
+        $templates = TemplatePenilaian::active()->forJurusan($siswaJurusan)->with('children')->orderBy('kategori')->orderBy('urutan')->get();
         $kejuruanRoot = $templates->where('kategori', 'kejuruan')->whereNull('parent_id')->sortBy('urutan');
         $sikapItems = $templates->where('kategori', 'sikap')->sortBy('urutan');
 

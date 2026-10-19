@@ -56,12 +56,9 @@
                 <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
                     @forelse($penempatans as $index => $penempatan)
                         @php
-                            $nilaiGuru = \App\Models\MonitoringNilai::where('penempatan_id', $penempatan->id)
-                                ->where('role_penilai', 'guru')->avg('nilai');
-                            $nilaiIndustri = \App\Models\MonitoringNilai::where('penempatan_id', $penempatan->id)
-                                ->where('role_penilai', 'industri')->avg('nilai');
-                            $kesimpulan = \App\Models\NilaiKesimpulan::where('penempatan_id', $penempatan->id)
-                                ->where('guru_id', auth()->user()->guru->id)->first();
+                            $nilaiGuru = $penempatan->rata_guru;
+                            $nilaiIndustri = $penempatan->rata_industri;
+                            $kesimpulan = $penempatan->nilaiKesimpulan;
                         @endphp
                         <tr class="hover:bg-gray-50 dark:hover:bg-gray-700 transition">
                             <td class="table-cell">{{ $penempatans->firstItem() + $index }}</td>

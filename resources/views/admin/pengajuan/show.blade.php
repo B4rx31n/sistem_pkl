@@ -357,7 +357,8 @@
             // ============================================
             // 1. DATA INDUSTRI & VALIDASI
             // ============================================
-            const industriData = JSON.parse('{!! json_encode($industriDataJs) !!}');
+            // JSON_HEX_* mencegah breakout string/HTML dari nama perusahaan (stored XSS)
+            const industriData = {!! json_encode($industriDataJs, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
 
             // ============================================
             // 2. TOGGLE INDUSTRI LAINNYA

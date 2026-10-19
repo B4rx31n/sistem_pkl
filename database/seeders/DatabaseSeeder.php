@@ -33,30 +33,39 @@ class DatabaseSeeder extends Seeder
         // Semua pakai firstOrCreate/updateOrCreate supaya aman dijalankan
         // ulang lewat `php artisan db:seed` tanpa menghapus data lain.
         // CATATAN: jangan pakai `migrate:fresh --seed` kecuali struktur
-        // database berubah, karena itu menghapus SEMUA data termasuk
+        // database berubah, itu menghapus SEMUA data termasuk
         // data yang kamu isi lewat aplikasi.
+
+        // Password akun demo: 'password' hanya di environment lokal.
+        // Di server (production) dibuat acak & dicetak ke console agar
+        // tidak ada kredensial lemah yang bocor ke publik.
+        $defaultPassword = app()->environment('local')
+            ? 'password'
+            : \Illuminate\Support\Str::random(16);
+
+        if (!app()->environment('local')) {
+            $this->command?->warn('Password akun demo: ' . $defaultPassword);
+        }
 
         // Buat Admin
         $adminUser = User::updateOrCreate(
             ['email' => 'admin@gmail.com'],
             [
                 'name' => 'Admin',
-                'password' => Hash::make('password'),
-                'role' => 'admin',
+                'password' => Hash::make($defaultPassword),
             ]
         );
-        $adminUser->setPasswordCopy('password');
+        $adminUser->forceFill(['role' => 'admin'])->save();
 
         // Buat guru tambahan untuk login
         $guruUser = User::updateOrCreate(
             ['email' => 'guru@gmail.com'],
             [
                 'name' => 'Guru Pembimbing',
-                'password' => Hash::make('password'),
-                'role' => 'guru',
+                'password' => Hash::make($defaultPassword),
             ]
         );
-        $guruUser->setPasswordCopy('password');
+        $guruUser->forceFill(['role' => 'guru'])->save();
 
         Guru::updateOrCreate(
             ['nip' => 'NIP001'],
@@ -73,11 +82,10 @@ class DatabaseSeeder extends Seeder
             ['email' => 'siswa@gmail.com'],
             [
                 'name' => 'Siswa PKL',
-                'password' => Hash::make('password'),
-                'role' => 'siswa',
+                'password' => Hash::make($defaultPassword),
             ]
         );
-        $siswaUser->setPasswordCopy('password');
+        $siswaUser->forceFill(['role' => 'siswa'])->save();
 
         Siswa::updateOrCreate(
             ['nis' => 'NIS001'],
@@ -109,11 +117,10 @@ class DatabaseSeeder extends Seeder
             ['email' => 'industri@gmail.com'],
             [
                 'name' => 'Admin Industri',
-                'password' => Hash::make('password'),
-                'role' => 'industri',
+                'password' => Hash::make($defaultPassword),
             ]
         );
-        $industriUser->setPasswordCopy('password');
+        $industriUser->forceFill(['role' => 'industri'])->save();
 
         $industri = Industri::updateOrCreate(
             ['kode_perusahaan' => 'IND-001'],

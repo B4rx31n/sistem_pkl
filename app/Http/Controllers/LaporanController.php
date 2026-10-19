@@ -17,23 +17,27 @@ class LaporanController extends Controller
 
         // Filter berdasarkan role
         if ($user->role == 'siswa') {
-            $penempatan = PenempatanPkl::where('siswa_id', $user->siswa->id)->first();
+            $penempatan = $user->siswa ? PenempatanPkl::where('siswa_id', $user->siswa->id)->first() : null;
             if ($penempatan) {
                 $query->where('penempatan_id', $penempatan->id);
             } else {
                 return redirect()->back()->with('error', 'Anda belum memiliki penempatan PKL.');
             }
         } elseif ($user->role == 'guru') {
+            if (!$user->guru) {
+                return redirect()->back()->with('error', 'Data guru tidak ditemukan.');
+            }
             $query->whereHas('penempatan', function ($q) use ($user) {
                 $q->where('guru_id', $user->guru->id);
             });
         } elseif ($user->role == 'industri') {
             $industri = $user->industri;
-            if ($industri) {
-                $query->whereHas('penempatan', function ($q) use ($industri) {
-                    $q->where('industri_id', $industri->id);
-                });
+            if (!$industri) {
+                return redirect()->back()->with('error', 'Data industri tidak ditemukan.');
             }
+            $query->whereHas('penempatan', function ($q) use ($industri) {
+                $q->where('industri_id', $industri->id);
+            });
         }
 
         // Guru & industri hanya melihat jurnal yang sudah disubmit siswa
@@ -63,10 +67,10 @@ class LaporanController extends Controller
         // Data untuk filter
         $siswas = PenempatanPkl::with('siswa')
             ->when($user->role == 'guru', function ($q) use ($user) {
-                $q->where('guru_id', $user->guru->id);
+                $q->where('guru_id', $user->guru?->id ?? 0);
             })
             ->when($user->role == 'industri', function ($q) use ($user) {
-                $q->where('industri_id', $user->industri->id);
+                $q->where('industri_id', $user->industri?->id ?? 0);
             })
             ->get()
             ->pluck('siswa');
@@ -81,23 +85,27 @@ class LaporanController extends Controller
 
         // Filter berdasarkan role
         if ($user->role == 'siswa') {
-            $penempatan = PenempatanPkl::where('siswa_id', $user->siswa->id)->first();
+            $penempatan = $user->siswa ? PenempatanPkl::where('siswa_id', $user->siswa->id)->first() : null;
             if ($penempatan) {
                 $query->where('penempatan_id', $penempatan->id);
             } else {
                 return redirect()->back()->with('error', 'Anda belum memiliki penempatan PKL.');
             }
         } elseif ($user->role == 'guru') {
+            if (!$user->guru) {
+                return redirect()->back()->with('error', 'Data guru tidak ditemukan.');
+            }
             $query->whereHas('penempatan', function ($q) use ($user) {
                 $q->where('guru_id', $user->guru->id);
             });
         } elseif ($user->role == 'industri') {
             $industri = $user->industri;
-            if ($industri) {
-                $query->whereHas('penempatan', function ($q) use ($industri) {
-                    $q->where('industri_id', $industri->id);
-                });
+            if (!$industri) {
+                return redirect()->back()->with('error', 'Data industri tidak ditemukan.');
             }
+            $query->whereHas('penempatan', function ($q) use ($industri) {
+                $q->where('industri_id', $industri->id);
+            });
         }
         // Admin bisa melihat semua
 
@@ -113,10 +121,10 @@ class LaporanController extends Controller
         // Data untuk filter
         $siswas = PenempatanPkl::with('siswa')
             ->when($user->role == 'guru', function ($q) use ($user) {
-                $q->where('guru_id', $user->guru->id);
+                $q->where('guru_id', $user->guru?->id ?? 0);
             })
             ->when($user->role == 'industri', function ($q) use ($user) {
-                $q->where('industri_id', $user->industri->id);
+                $q->where('industri_id', $user->industri?->id ?? 0);
             })
             ->get()
             ->pluck('siswa');
@@ -187,6 +195,7 @@ class LaporanController extends Controller
 
         $templates = \App\Models\TemplatePenilaian::active()
             ->forJurusan($siswaJurusan)
+            ->with('children')
             ->orderBy('kategori')
             ->orderBy('urutan')
             ->get();
@@ -309,6 +318,7 @@ class LaporanController extends Controller
 
         $templates = \App\Models\TemplatePenilaian::active()
             ->forJurusan($siswaJurusan)
+            ->with('children')
             ->orderBy('kategori')
             ->orderBy('urutan')
             ->get();
@@ -331,21 +341,27 @@ class LaporanController extends Controller
 
         // Filter sama seperti di method jurnal()
         if ($user->role == 'siswa') {
-            $penempatan = PenempatanPkl::where('siswa_id', $user->siswa->id)->first();
+            $penempatan = $user->siswa ? PenempatanPkl::where('siswa_id', $user->siswa->id)->first() : null;
             if ($penempatan) {
                 $query->where('penempatan_id', $penempatan->id);
+            } else {
+                abort(403);
             }
         } elseif ($user->role == 'guru') {
+            if (!$user->guru) {
+                abort(403);
+            }
             $query->whereHas('penempatan', function ($q) use ($user) {
                 $q->where('guru_id', $user->guru->id);
             });
         } elseif ($user->role == 'industri') {
             $industri = $user->industri;
-            if ($industri) {
-                $query->whereHas('penempatan', function ($q) use ($industri) {
-                    $q->where('industri_id', $industri->id);
-                });
+            if (!$industri) {
+                abort(403);
             }
+            $query->whereHas('penempatan', function ($q) use ($industri) {
+                $q->where('industri_id', $industri->id);
+            });
         }
 
         // Guru & industri hanya melihat jurnal yang sudah disubmit siswa
@@ -380,21 +396,27 @@ class LaporanController extends Controller
         $query = MonitoringNilai::with(['penempatan.siswa', 'penempatan.guru']);
 
         if ($user->role == 'siswa') {
-            $penempatan = PenempatanPkl::where('siswa_id', $user->siswa->id)->first();
+            $penempatan = $user->siswa ? PenempatanPkl::where('siswa_id', $user->siswa->id)->first() : null;
             if ($penempatan) {
                 $query->where('penempatan_id', $penempatan->id);
+            } else {
+                abort(403);
             }
         } elseif ($user->role == 'guru') {
+            if (!$user->guru) {
+                abort(403);
+            }
             $query->whereHas('penempatan', function ($q) use ($user) {
                 $q->where('guru_id', $user->guru->id);
             });
         } elseif ($user->role == 'industri') {
             $industri = $user->industri;
-            if ($industri) {
-                $query->whereHas('penempatan', function ($q) use ($industri) {
-                    $q->where('industri_id', $industri->id);
-                });
+            if (!$industri) {
+                abort(403);
             }
+            $query->whereHas('penempatan', function ($q) use ($industri) {
+                $q->where('industri_id', $industri->id);
+            });
         }
 
         if ($request->has('siswa_id') && $request->siswa_id != '') {
@@ -414,18 +436,32 @@ class LaporanController extends Controller
         $user = auth()->user();
         $showKesimpulan = in_array($user->role, ['admin', 'guru']);
 
-        $query = PenempatanPkl::with(['siswa', 'guru', 'industri', 'kompetensi'])
+        $query = PenempatanPkl::with([
+                'siswa',
+                'guru',
+                'industri',
+                'kompetensi',
+                'monitoringNilai',
+                'nilaiKesimpulan',
+            ])
             ->where('status', 'aktif');
 
         if ($user->role == 'siswa') {
+            if (!$user->siswa) {
+                abort(403);
+            }
             $query->where('siswa_id', $user->siswa->id);
         } elseif ($user->role == 'guru') {
+            if (!$user->guru) {
+                abort(403);
+            }
             $query->where('guru_id', $user->guru->id);
         } elseif ($user->role == 'industri') {
             $industri = $user->industri;
-            if ($industri) {
-                $query->where('industri_id', $industri->id);
+            if (!$industri) {
+                abort(403);
             }
+            $query->where('industri_id', $industri->id);
         }
 
         if ($request->has('siswa_id') && $request->siswa_id != '') {
@@ -434,15 +470,13 @@ class LaporanController extends Controller
 
         $penempatans = $query->get();
 
+        // Sudah di-eager-load di atas → tidak ada query per baris (N+1)
         $raportData = $penempatans->map(function ($penempatan) use ($showKesimpulan) {
-            $nilaisGuru = MonitoringNilai::where('penempatan_id', $penempatan->id)
-                ->where('role_penilai', 'guru')->get();
-            $nilaisIndustri = MonitoringNilai::where('penempatan_id', $penempatan->id)
-                ->where('role_penilai', 'industri')->get();
-            $kesimpulan = null;
-            if ($showKesimpulan) {
-                $kesimpulan = \App\Models\NilaiKesimpulan::where('penempatan_id', $penempatan->id)->first();
-            }
+            $nilaisGuru = $penempatan->monitoringNilai
+                ->where('role_penilai', 'guru');
+            $nilaisIndustri = $penempatan->monitoringNilai
+                ->where('role_penilai', 'industri');
+            $kesimpulan = $showKesimpulan ? $penempatan->nilaiKesimpulan : null;
 
             return [
                 'penempatan' => $penempatan,
@@ -460,12 +494,33 @@ class LaporanController extends Controller
 
     public function nilaiCetak($penempatan_id)
     {
+        $user = auth()->user();
+
         $penempatan = PenempatanPkl::with(['siswa', 'guru', 'kompetensi', 'industri'])
             ->findOrFail($penempatan_id);
+
+        // Cek kepemilikan — tanpa ini, semua user login bisa melihat
+        // nilai siswa lain hanya dengan menebak ID (IDOR)
+        if ($user->role == 'siswa') {
+            if (!$user->siswa || $penempatan->siswa_id != $user->siswa->id) {
+                abort(403);
+            }
+        } elseif ($user->role == 'guru') {
+            if (!$user->guru || $penempatan->guru_id != $user->guru->id) {
+                abort(403);
+            }
+        } elseif ($user->role == 'industri') {
+            if (!$user->industri || $penempatan->industri_id != $user->industri->id) {
+                abort(403);
+            }
+        } elseif ($user->role != 'admin') {
+            abort(403);
+        }
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
         $templates = \App\Models\TemplatePenilaian::active()
             ->forJurusan($siswaJurusan)
+            ->with('children')
             ->orderBy('kategori')
             ->orderBy('urutan')
             ->get();

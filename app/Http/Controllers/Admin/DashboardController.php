@@ -26,10 +26,12 @@ class DashboardController extends Controller
         $totalSelesai = PenempatanPkl::where('status', 'selesai')->count();
         $totalBatal = PenempatanPkl::where('status', 'batal')->count();
 
-        // Statistik Jurnal
+        // Statistik Jurnal (satu query agregat, bukan 14 count() terpisah)
         $totalJurnalHariIni = JurnalHarian::whereDate('tanggal', today())->count();
         $totalJurnalMingguIni = JurnalHarian::whereBetween('tanggal', [now()->startOfWeek(), now()->endOfWeek()])->count();
-        $totalJurnalBulanIni = JurnalHarian::whereMonth('tanggal', now()->month)->count();
+        $totalJurnalBulanIni = JurnalHarian::whereYear('tanggal', now()->year)
+            ->whereMonth('tanggal', now()->month)
+            ->count();
 
         // Siswa Belum Jurnal Hari Ini
         $siswaBelumJurnal = PenempatanPkl::with(['siswa', 'industri'])
@@ -46,25 +48,33 @@ class DashboardController extends Controller
             'batal' => $totalBatal
         ];
 
-        // Data untuk Chart Jurnal Per Minggu
+        // Data untuk Chart Jurnal Per Minggu — 1 query agregat per rentang
+        // (sebelumnya 14x count() per hari, dan whereDate() tidak pakai index)
+        $mingguIniMulai = now()->startOfWeek()->toDateString();
+        $mingguLaluMulai = now()->startOfWeek()->subWeek()->toDateString();
+        $mingguLaluSelesai = now()->startOfWeek()->subWeek()->endOfWeek()->toDateString();
+
+        $jurnalGrouped = JurnalHarian::whereBetween('tanggal', [$mingguLaluMulai, now()->endOfWeek()->toDateString()])
+            ->selectRaw('DATE(tanggal) as tgl, COUNT(*) as jumlah')
+            ->groupBy('tgl')
+            ->pluck('jumlah', 'tgl');
+
         $jurnalPerMinggu = [
             'labels' => ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'],
-            'data' => []
+            'data' => [],
         ];
 
         for ($i = 0; $i < 7; $i++) {
-            $date = now()->startOfWeek()->addDays($i);
-            $count = JurnalHarian::whereDate('tanggal', $date)->count();
-            $jurnalPerMinggu['data'][] = $count;
+            $date = now()->startOfWeek()->addDays($i)->toDateString();
+            $jurnalPerMinggu['data'][] = (int) ($jurnalGrouped[$date] ?? 0);
         }
 
         // Data untuk Chart Jurnal Minggu Lalu
         $jurnalMingguLalu = [];
 
         for ($i = 0; $i < 7; $i++) {
-            $date = now()->startOfWeek()->subWeek()->addDays($i);
-            $count = JurnalHarian::whereDate('tanggal', $date)->count();
-            $jurnalMingguLalu[] = $count;
+            $date = now()->startOfWeek()->subWeek()->addDays($i)->toDateString();
+            $jurnalMingguLalu[] = (int) ($jurnalGrouped[$date] ?? 0);
         }
 
         // Data untuk Chart Perusahaan Teratas

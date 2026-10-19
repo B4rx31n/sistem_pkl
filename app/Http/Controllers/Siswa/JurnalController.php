@@ -30,7 +30,8 @@ class JurnalController extends Controller
             ])->with('error', 'Anda belum memiliki penempatan PKL aktif.');
         }
 
-        $query = JurnalHarian::where('penempatan_id', $penempatan->id);
+        $query = JurnalHarian::with('komentarJurnal.guru')
+            ->where('penempatan_id', $penempatan->id);
 
         // Filter by date
         if ($request->has('tanggal') && $request->tanggal != '') {
@@ -69,18 +70,34 @@ class JurnalController extends Controller
 
     public function store(JurnalRequest $request)
     {
-        $data = $request->validated();
+        $siswa = auth()->user()->siswa;
 
-        // Upload file jika ada
+        if (!$siswa) {
+            abort(403, 'Data siswa tidak ditemukan.');
+        }
+
+        // Penempatan SELALU diambil dari akun siswa yang login,
+        // bukan dari input request (mencegah IDOR).
+        $penempatan = PenempatanPkl::where('siswa_id', $siswa->id)
+            ->where('status', 'aktif')
+            ->first();
+
+        if (!$penempatan) {
+            return redirect()->route('siswa.jurnal.index')
+                ->with('error', 'Anda belum memiliki penempatan PKL aktif.');
+        }
+
+        $data = $request->validated();
+        $data['penempatan_id'] = $penempatan->id;
+        $data['status'] = 'draft';
+
+        // Upload file jika ada (nama file dibuat server — jangan pakai nama asli user)
         if ($request->hasFile('dokumentasi')) {
-            $file = $request->file('dokumentasi');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('dokumentasi', $filename, 'public');
-            $data['dokumentasi'] = $path;
+            $data['dokumentasi'] = $request->file('dokumentasi')->store('dokumentasi', 'public');
         }
 
         // Cek duplikat
-        $exists = JurnalHarian::where('penempatan_id', $data['penempatan_id'])
+        $exists = JurnalHarian::where('penempatan_id', $penempatan->id)
             ->whereDate('tanggal', $data['tanggal'])
             ->exists();
 
@@ -88,7 +105,14 @@ class JurnalController extends Controller
             return back()->with('error', 'Jurnal untuk tanggal ini sudah ada.');
         }
 
-        JurnalHarian::create($data);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($data) {
+                JurnalHarian::create($data);
+            });
+        } catch (\Illuminate\Database\QueryException $e) {
+            // UNIQUE (penempatan_id, tanggal) menangkap race condition
+            return back()->with('error', 'Jurnal untuk tanggal ini sudah ada.');
+        }
 
         return redirect()->route('siswa.jurnal.index')
             ->with('success', 'Jurnal berhasil disimpan.');
@@ -121,7 +145,10 @@ class JurnalController extends Controller
                 ->with('error', 'Jurnal yang sudah disubmit tidak dapat diupdate.');
         }
 
+        // Buang field yang tidak boleh diubah dari input user
+        // (penempatan_id tidak bisa dipindahkan ke penempatan orang lain)
         $data = $request->validated();
+        unset($data['penempatan_id'], $data['status']);
 
         if ($request->hasFile('dokumentasi')) {
             // Hapus file lama
@@ -129,10 +156,7 @@ class JurnalController extends Controller
                 Storage::disk('public')->delete($jurnal->dokumentasi);
             }
 
-            $file = $request->file('dokumentasi');
-            $filename = time() . '_' . $file->getClientOriginalName();
-            $path = $file->storeAs('dokumentasi', $filename, 'public');
-            $data['dokumentasi'] = $path;
+            $data['dokumentasi'] = $request->file('dokumentasi')->store('dokumentasi', 'public');
         }
 
         $jurnal->update($data);

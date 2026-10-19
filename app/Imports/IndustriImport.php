@@ -39,9 +39,8 @@ class IndustriImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'name'     => $nama,
                 'email'    => $emailLogin,
                 'password' => Hash::make($password),
-                'role'     => 'industri',
             ]);
-            $user->setPasswordCopy($password);
+            $user->forceFill(['role' => 'industri'])->save();
 
             Industri::create([
                 'user_id'           => $user->id,

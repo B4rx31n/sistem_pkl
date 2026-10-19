@@ -49,7 +49,7 @@ class ImportController extends Controller
     protected function handleImport(Request $request, $import, string $redirect)
     {
         $request->validate([
-            'file' => 'required|file|mimes:xlsx,xls,csv',
+            'file' => 'required|file|mimes:xlsx,xls,csv|max:10240',
         ]);
 
         Excel::import($import, $request->file('file'));

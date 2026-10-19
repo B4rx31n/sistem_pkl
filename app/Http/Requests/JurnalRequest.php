@@ -13,12 +13,14 @@ class JurnalRequest extends FormRequest
 
     public function rules(): array
     {
+        // penempatan_id & status TIDAK lagi diterima dari input user:
+        // penempatan selalu diambil dari akun siswa yang login (mencegah
+        // siswa menulis jurnal ke penempatan siswa lain / IDOR),
+        // dan status selalu 'draft' (pengiriman hanya lewat tombol Submit).
         return [
-            'penempatan_id' => 'required|exists:penempatan_pkl,id',
             'tanggal' => 'required|date',
             'aktivitas' => 'required|string',
             'dokumentasi' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'status' => 'required|in:draft,submitted',
         ];
     }
 

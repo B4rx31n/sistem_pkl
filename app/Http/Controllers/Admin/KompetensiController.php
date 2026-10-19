@@ -59,6 +59,10 @@ class KompetensiController extends Controller
 
     public function destroy(Kompetensi $kompetensi)
     {
+        if ($kompetensi->penempatan()->exists()) {
+            return back()->with('error', 'Kompetensi tidak bisa dihapus karena masih dipakai pada penempatan PKL.');
+        }
+
         $kompetensi->delete();
         return redirect()->route('admin.kompetensi.index')
             ->with('success', 'Data kompetensi berhasil dihapus.');

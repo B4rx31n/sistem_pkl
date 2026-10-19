@@ -54,35 +54,35 @@ class IndustriController extends Controller
 
     public function store(IndustriRequest $request)
     {
-        // Create User
-        $user = User::create([
-            'name' => $request->nama_perusahaan,
-            'email' => $request->email_login,
-            'password' => Hash::make($request->password),
-            'role' => 'industri',
-        ]);
-
-        $user->setPasswordCopy($request->password);
-
         // Tentukan lokasi: jika "Lainnya", pakai nama kota yang diketik admin
         $lokasi = $request->lokasi === 'Lainnya' ? $request->lokasi_lainnya : $request->lokasi;
 
-        // Create Industri
-        Industri::create([
-            'user_id' => $user->id,
-            'kode_perusahaan' => $request->kode_perusahaan,
-            'nama_perusahaan' => $request->nama_perusahaan,
-            'lokasi' => $lokasi,
-            'alamat' => $request->alamat,
-            'no_telepon' => $request->no_telepon,
-            'email' => $request->email,
-            'bidang_usaha' => $request->bidang_usaha,
-            'kategori' => $request->kategori,
-            'jurusan' => $request->kategori,
-            'penanggung_jawab' => $request->penanggung_jawab,
-            'kuota' => $request->kuota,
-            'status' => $request->status,
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request, $lokasi) {
+            // Create User
+            $user = User::create([
+                'name' => $request->nama_perusahaan,
+                'email' => $request->email_login,
+                'password' => Hash::make($request->password),
+            ]);
+            $user->forceFill(['role' => 'industri'])->save();
+
+            // Create Industri
+            Industri::create([
+                'user_id' => $user->id,
+                'kode_perusahaan' => $request->kode_perusahaan,
+                'nama_perusahaan' => $request->nama_perusahaan,
+                'lokasi' => $lokasi,
+                'alamat' => $request->alamat,
+                'no_telepon' => $request->no_telepon,
+                'email' => $request->email,
+                'bidang_usaha' => $request->bidang_usaha,
+                'kategori' => $request->kategori,
+                'jurusan' => $request->kategori,
+                'penanggung_jawab' => $request->penanggung_jawab,
+                'kuota' => $request->kuota,
+                'status' => $request->status,
+            ]);
+        });
 
         return redirect()->route('admin.industri.index')
             ->with('success', 'Data industri berhasil ditambahkan.');
@@ -103,43 +103,41 @@ class IndustriController extends Controller
     {
         $data = $request->validated();
 
-        // Update User (email login & password) - hanya jika industri punya akun login.
-        // Industri kustom ("Lainnya") dari form penempatan tidak memiliki akun.
-        if ($industri->user) {
-            $userData = [
-                'name' => $data['nama_perusahaan'],
-                'email' => $data['email_login'],
-            ];
-
-            if (!empty($data['password'])) {
-                $userData['password'] = Hash::make($data['password']);
-            }
-
-            $industri->user()->update($userData);
-
-            if (!empty($data['password'])) {
-                $industri->user->setPasswordCopy($data['password']);
-            }
-        }
-
         // Tentukan lokasi: jika "Lainnya", pakai nama kota yang diketik admin
         $lokasi = $data['lokasi'] === 'Lainnya' ? ($data['lokasi_lainnya'] ?? null) : $data['lokasi'];
 
-        // Update Industri
-        $industri->update([
-            'kode_perusahaan' => $data['kode_perusahaan'],
-            'nama_perusahaan' => $data['nama_perusahaan'],
-            'lokasi' => $lokasi,
-            'alamat' => $data['alamat'],
-            'no_telepon' => $data['no_telepon'],
-            'email' => $data['email'] ?? null,
-            'bidang_usaha' => $data['bidang_usaha'],
-            'kategori' => $data['kategori'],
-            'jurusan' => $data['kategori'],
-            'penanggung_jawab' => $data['penanggung_jawab'],
-            'kuota' => $data['kuota'],
-            'status' => $data['status'],
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($industri, $data, $lokasi) {
+            // Update User (email login & password) - hanya jika industri punya akun login.
+            // Industri kustom ("Lainnya") dari form penempatan tidak memiliki akun.
+            if ($industri->user) {
+                $userData = [
+                    'name' => $data['nama_perusahaan'],
+                    'email' => $data['email_login'],
+                ];
+
+                if (!empty($data['password'])) {
+                    $userData['password'] = Hash::make($data['password']);
+                }
+
+                $industri->user()->update($userData);
+            }
+
+            // Update Industri
+            $industri->update([
+                'kode_perusahaan' => $data['kode_perusahaan'],
+                'nama_perusahaan' => $data['nama_perusahaan'],
+                'lokasi' => $lokasi,
+                'alamat' => $data['alamat'],
+                'no_telepon' => $data['no_telepon'],
+                'email' => $data['email'] ?? null,
+                'bidang_usaha' => $data['bidang_usaha'],
+                'kategori' => $data['kategori'],
+                'jurusan' => $data['kategori'],
+                'penanggung_jawab' => $data['penanggung_jawab'],
+                'kuota' => $data['kuota'],
+                'status' => $data['status'],
+            ]);
+        });
 
         return redirect()->route('admin.industri.index')
             ->with('success', 'Data industri berhasil diupdate.');
@@ -147,6 +145,10 @@ class IndustriController extends Controller
 
     public function destroy(Industri $industri)
     {
+        if ($industri->penempatan()->exists()) {
+            return back()->with('error', 'Industri tidak bisa dihapus karena masih memiliki penempatan PKL. Hapus penempatan terlebih dahulu.');
+        }
+
         // Industri kustom ("Lainnya") tidak punya akun login user.
         if ($industri->user) {
             $industri->user->delete();

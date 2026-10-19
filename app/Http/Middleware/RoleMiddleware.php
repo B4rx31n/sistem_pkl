@@ -11,27 +11,23 @@ class RoleMiddleware
     public function handle(Request $request, Closure $next, ...$roles)
     {
         if (!Auth::check()) {
+            // Untuk request data (POST/PUT/DELETE) redirect justru membuat
+            // kesan "berhasil" — kembalikan 403.
+            if ($request->expectsJson() || !$request->isMethod('GET')) {
+                abort(403, 'Unauthorized access.');
+            }
+
             return redirect('login');
         }
 
         $user = Auth::user();
 
         // Cek apakah user memiliki salah satu role yang diizinkan
-        if (in_array($user->role, $roles)) {
+        if (in_array($user->role, $roles, true)) {
             return $next($request);
         }
 
-        // Jika tidak memiliki akses, redirect ke halaman yang sesuai
-        if ($user->role === 'admin') {
-            return redirect()->route('admin.dashboard');
-        } elseif ($user->role === 'guru') {
-            return redirect()->route('guru.monitoring.index');
-        } elseif ($user->role === 'siswa') {
-            return redirect()->route('siswa.jurnal.index');
-        } elseif ($user->role === 'industri') {
-            return redirect()->route('industri.dashboard');
-        }
-
-        abort(403, 'Unauthorized access.');
+        // Akses ditolak: 403 untuk semua metode.
+        abort(403, 'Anda tidak memiliki akses ke halaman ini.');
     }
 }

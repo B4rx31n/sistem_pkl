@@ -55,26 +55,25 @@ class SiswaController extends Controller
 
     public function store(SiswaRequest $request)
     {
-        // Create User
-        $user = User::create([
-            'name' => $request->nama_siswa,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'siswa',
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            // Create User
+            $user = User::create([
+                'name' => $request->nama_siswa,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+            $user->forceFill(['role' => 'siswa'])->save();
 
-        // Simpan salinan password terenkripsi agar bisa dilihat admin
-        $user->setPasswordCopy($request->password);
-
-        // Create Siswa
-        Siswa::create([
-            'user_id' => $user->id,
-            'nis' => $request->nis,
-            'nama_siswa' => $request->nama_siswa,
-            'jurusan' => $request->jurusan,
-            'no_telepon' => $request->no_telepon,
-            'alamat' => $request->alamat,
-        ]);
+            // Create Siswa
+            Siswa::create([
+                'user_id' => $user->id,
+                'nis' => $request->nis,
+                'nama_siswa' => $request->nama_siswa,
+                'jurusan' => $request->jurusan,
+                'no_telepon' => $request->no_telepon,
+                'alamat' => $request->alamat,
+            ]);
+        });
 
         return redirect()->route('admin.siswa.index')
             ->with('success', 'Data siswa berhasil ditambahkan.');
@@ -103,30 +102,28 @@ class SiswaController extends Controller
     {
         $data = $request->validated();
 
-        // Update User
-        $userData = [
-            'name' => $data['nama_siswa'],
-            'email' => $data['email'],
-        ];
+        \Illuminate\Support\Facades\DB::transaction(function () use ($siswa, $data) {
+            // Update User
+            $userData = [
+                'name' => $data['nama_siswa'],
+                'email' => $data['email'],
+            ];
 
-        if (!empty($data['password'])) {
-            $userData['password'] = Hash::make($data['password']);
-        }
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
 
-        $siswa->user()->update($userData);
+            $siswa->user()->update($userData);
 
-        if (!empty($data['password'])) {
-            $siswa->user->setPasswordCopy($data['password']);
-        }
-
-        // Update Siswa
-        $siswa->update([
-            'nis' => $data['nis'],
-            'nama_siswa' => $data['nama_siswa'],
-            'jurusan' => $data['jurusan'],
-            'no_telepon' => $data['no_telepon'] ?? null,
-            'alamat' => $data['alamat'] ?? null,
-        ]);
+            // Update Siswa
+            $siswa->update([
+                'nis' => $data['nis'],
+                'nama_siswa' => $data['nama_siswa'],
+                'jurusan' => $data['jurusan'],
+                'no_telepon' => $data['no_telepon'] ?? null,
+                'alamat' => $data['alamat'] ?? null,
+            ]);
+        });
 
         return redirect()->route('admin.siswa.index')
             ->with('success', 'Data siswa berhasil diupdate.');
@@ -134,6 +131,10 @@ class SiswaController extends Controller
 
     public function destroy(Siswa $siswa)
     {
+        if ($siswa->penempatan()->exists()) {
+            return back()->with('error', 'Siswa tidak bisa dihapus karena masih memiliki penempatan PKL. Hapus penempatan terlebih dahulu.');
+        }
+
         $siswa->user->delete();
         return redirect()->route('admin.siswa.index')
             ->with('success', 'Data siswa berhasil dihapus.');

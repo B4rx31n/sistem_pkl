@@ -38,9 +38,8 @@ class SiswaImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'name'     => $nama,
                 'email'    => $email,
                 'password' => Hash::make($password),
-                'role'     => 'siswa',
             ]);
-            $user->setPasswordCopy($password);
+            $user->forceFill(['role' => 'siswa'])->save();
 
             Siswa::create([
                 'user_id'    => $user->id,

@@ -38,9 +38,8 @@ class GuruImport implements ToCollection, WithHeadingRow, SkipsEmptyRows
                 'name'     => $nama,
                 'email'    => $email,
                 'password' => Hash::make($password),
-                'role'     => 'guru',
             ]);
-            $user->setPasswordCopy($password);
+            $user->forceFill(['role' => 'guru'])->save();
 
             Guru::create([
                 'user_id'    => $user->id,

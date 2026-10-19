@@ -38,25 +38,24 @@ class GuruController extends Controller
 
     public function store(GuruRequest $request)
     {
-        // Create User
-        $user = User::create([
-            'name' => $request->nama_guru,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => 'guru',
-        ]);
+        \Illuminate\Support\Facades\DB::transaction(function () use ($request) {
+            // Create User
+            $user = User::create([
+                'name' => $request->nama_guru,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+            ]);
+            $user->forceFill(['role' => 'guru'])->save();
 
-        // Simpan salinan password terenkripsi agar bisa dilihat admin
-        $user->setPasswordCopy($request->password);
-
-        // Create Guru
-        Guru::create([
-            'user_id' => $user->id,
-            'nip' => $request->nip,
-            'nama_guru' => $request->nama_guru,
-            'no_telepon' => $request->no_telepon,
-            'alamat' => $request->alamat,
-        ]);
+            // Create Guru
+            Guru::create([
+                'user_id' => $user->id,
+                'nip' => $request->nip,
+                'nama_guru' => $request->nama_guru,
+                'no_telepon' => $request->no_telepon,
+                'alamat' => $request->alamat,
+            ]);
+        });
 
         return redirect()->route('admin.guru.index')
             ->with('success', 'Data guru berhasil ditambahkan.');
@@ -78,29 +77,27 @@ class GuruController extends Controller
         // Ambil data yang sudah divalidasi
         $data = $request->validated();
 
-        // Update User (email & password)
-        $userData = [
-            'name' => $data['nama_guru'],
-            'email' => $data['email'],
-        ];
+        \Illuminate\Support\Facades\DB::transaction(function () use ($guru, $data) {
+            // Update User (email & password)
+            $userData = [
+                'name' => $data['nama_guru'],
+                'email' => $data['email'],
+            ];
 
-        if (!empty($data['password'])) {
-            $userData['password'] = Hash::make($data['password']);
-        }
+            if (!empty($data['password'])) {
+                $userData['password'] = Hash::make($data['password']);
+            }
 
-        $guru->user()->update($userData);
+            $guru->user()->update($userData);
 
-        if (!empty($data['password'])) {
-            $guru->user->setPasswordCopy($data['password']);
-        }
-
-        // Update Guru
-        $guru->update([
-            'nip' => $data['nip'],
-            'nama_guru' => $data['nama_guru'],
-            'no_telepon' => $data['no_telepon'] ?? null,
-            'alamat' => $data['alamat'] ?? null,
-        ]);
+            // Update Guru
+            $guru->update([
+                'nip' => $data['nip'],
+                'nama_guru' => $data['nama_guru'],
+                'no_telepon' => $data['no_telepon'] ?? null,
+                'alamat' => $data['alamat'] ?? null,
+            ]);
+        });
 
         return redirect()->route('admin.guru.index')
             ->with('success', 'Data guru berhasil diupdate.');
@@ -108,7 +105,11 @@ class GuruController extends Controller
 
     public function destroy(Guru $guru)
     {
-        $guru->user->delete(); // Cascade akan menghapus guru juga
+        if ($guru->penempatan()->exists()) {
+            return back()->with('error', 'Guru tidak bisa dihapus karena masih memiliki penempatan PKL. Selesaikan/hapus penempatan terlebih dahulu.');
+        }
+
+        $guru->user->delete(); // Profil guru ikut terhapus via cascade
         return redirect()->route('admin.guru.index')
             ->with('success', 'Data guru berhasil dihapus.');
     }

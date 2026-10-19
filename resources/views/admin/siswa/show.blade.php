@@ -39,15 +39,9 @@
                     </div>
                     <div>
                         <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Password</h3>
-                        <div class="flex items-center gap-2">
-                            <p class="text-lg font-semibold text-gray-900 dark:text-white" id="password-display">
-                                <span id="password-bullets">&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;&#x2022;</span>
-                                <span id="password-text" style="display:none;">{{ $siswa->user->getReadablePassword() ?? 'Tidak tersedia' }}</span>
-                            </p>
-                            <button type="button" onclick="togglePassword()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
-                                <i class="fas fa-eye" id="eye-icon"></i>
-                            </button>
-                        </div>
+                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                            Tidak dapat dilihat. Gunakan fitur "Lupa Password" atau minta user mengganti password sendiri.
+                        </p>
                     </div>
                     <div>
                         <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">No Telepon</h3>
@@ -83,23 +77,3 @@
     </div>
 @endsection
 
-@push('scripts')
-<script>
-function togglePassword() {
-    const bullets = document.getElementById('password-bullets');
-    const text = document.getElementById('password-text');
-    const icon = document.getElementById('eye-icon');
-    if (text.style.display === 'none') {
-        text.style.display = 'inline';
-        bullets.style.display = 'none';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        text.style.display = 'none';
-        bullets.style.display = 'inline';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
-</script>
-@endpush

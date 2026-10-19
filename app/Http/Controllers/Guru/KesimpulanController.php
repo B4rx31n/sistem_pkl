@@ -14,7 +14,20 @@ class KesimpulanController extends Controller
     {
         $guru = auth()->user()->guru;
 
+        // Eager-load agregat & kesimpulan → 3 query untuk seluruh halaman,
+        // bukan 3 query x 10 baris (N+1) di dalam blade
+        $guruId = $guru->id;
+
         $query = PenempatanPkl::with(['siswa', 'industri'])
+            ->with(['nilaiKesimpulan' => function ($q) use ($guruId) {
+                $q->where('guru_id', $guruId);
+            }])
+            ->withAggregate(['monitoringNilai as rata_guru' => function ($q) {
+                $q->where('role_penilai', 'guru');
+            }], 'nilai', 'avg')
+            ->withAggregate(['monitoringNilai as rata_industri' => function ($q) {
+                $q->where('role_penilai', 'industri');
+            }], 'nilai', 'avg')
             ->where('guru_id', $guru->id);
 
         if ($request->has('status') && $request->status != '') {

@@ -64,7 +64,8 @@ class MonitoringController extends Controller
             abort(403, 'Anda tidak memiliki akses ke data ini.');
         }
 
-        $jurnals = JurnalHarian::where('penempatan_id', $penempatan->id)
+        $jurnals = JurnalHarian::with(['komentarJurnal.guru'])
+            ->where('penempatan_id', $penempatan->id)
             ->where('status', 'submitted')
             ->orderBy('tanggal', 'desc')
             ->paginate(10);

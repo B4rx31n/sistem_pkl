@@ -22,10 +22,8 @@
         <div class="card-body">
             <form action="{{ route('siswa.jurnal.store') }}" method="POST" enctype="multipart/form-data">
                 @csrf
-                
-                <!-- HIDDEN INPUT UNTUK PENEMPATAN_ID -->
-                <input type="hidden" name="penempatan_id" value="{{ $penempatan->id ?? '' }}">
-                
+
+                <!-- penempatan_id & status ditentukan server (bukan dari input user) -->
                 <div class="row">
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Tanggal <span class="text-danger">*</span></label>
@@ -38,13 +36,7 @@
 
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Status</label>
-                        <select name="status" class="form-select">
-                            <option value="draft">Draft (Simpan sebagai draft)</option>
-                            <option value="submitted">Submit (Kirim langsung)</option>
-                        </select>
-                        @error('status')
-                            <div class="invalid-feedback">{{ $message }}</div>
-                        @enderror
+                        <p class="form-control-plaintext">Draft (kirim ke guru lewat tombol "Submit" setelah disimpan)</p>
                     </div>
 
                     <div class="col-12 mb-3">

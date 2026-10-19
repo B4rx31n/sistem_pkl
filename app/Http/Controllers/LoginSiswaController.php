@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Validation\ValidationException;
 
 class LoginSiswaController extends Controller
 {
@@ -20,21 +22,31 @@ class LoginSiswaController extends Controller
             'password' => 'required|string',
         ]);
 
+        // Batasi percobaan login per IP+identitas (anti brute-force)
+        $throttleKey = 'login-siswa:' . md5(strtolower($request->nis) . '|' . $request->ip());
+
+        if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
+            $seconds = RateLimiter::availableIn($throttleKey);
+
+            throw ValidationException::withMessages([
+                'nis' => "Terlalu banyak percobaan. Coba lagi dalam {$seconds} detik.",
+            ]);
+        }
+
         $siswa = \App\Models\Siswa::where('nis', $request->nis)->first();
+        $user = $siswa?->user;
 
-        if (!$siswa) {
-            return back()->withErrors(['nis' => 'NIS tidak ditemukan.']);
+        // Pesan error diseragamkan agar penyerang tidak bisa
+        // membedakan NIS valid / tidak (anti user enumeration)
+        if (!$user || !Hash::check($request->password, $user->password)) {
+            RateLimiter::hit($throttleKey, 60);
+
+            throw ValidationException::withMessages([
+                'nis' => 'NIS atau password salah.',
+            ]);
         }
 
-        $user = $siswa->user;
-
-        if (!$user) {
-            return back()->withErrors(['nis' => 'Akun tidak ditemukan.']);
-        }
-
-        if (!Hash::check($request->password, $user->password)) {
-            return back()->withErrors(['password' => 'Password salah.']);
-        }
+        RateLimiter::clear($throttleKey);
 
         Auth::login($user);
         $request->session()->regenerate();

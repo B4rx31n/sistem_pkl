@@ -254,7 +254,7 @@
             const gridColor = isDark ? '#374151' : '#e5e7eb';
             const legendColor = isDark ? '#e5e7eb' : '#374151';
 
-            const labelsMinggu = {!! json_encode($jurnalPerMinggu['labels'] ?? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']) !!};
+            const labelsMinggu = {!! json_encode($jurnalPerMinggu['labels'] ?? ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!};
 
             // ============ JURNAL CHART (Line) ============
             const lineCtx = document.getElementById('jurnalLineChart').getContext('2d');
@@ -264,7 +264,7 @@
                     labels: labelsMinggu,
                     datasets: [{
                         label: 'Minggu Ini',
-                        data: {!! json_encode($jurnalPerMinggu['data'] ?? [0, 0, 0, 0, 0, 0, 0]) !!},
+                        data: {!! json_encode($jurnalPerMinggu['data'] ?? [0, 0, 0, 0, 0, 0, 0], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
                         borderColor: '#3B82F6',
                         backgroundColor: 'rgba(59, 130, 246, 0.1)',
                         tension: 0.4,
@@ -275,7 +275,7 @@
                         pointHoverRadius: 6
                     }, {
                         label: 'Minggu Lalu',
-                        data: {!! json_encode($jurnalMingguLalu ?? [0, 0, 0, 0, 0, 0, 0]) !!},
+                        data: {!! json_encode($jurnalMingguLalu ?? [0, 0, 0, 0, 0, 0, 0], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
                         borderColor: '#EF4444',
                         backgroundColor: 'rgba(239, 68, 68, 0.08)',
                         tension: 0.4,
@@ -366,10 +366,10 @@
             new Chart(industriCtx, {
                 type: 'bar',
                 data: {
-                    labels: {!! json_encode($topIndustri->pluck('nama_perusahaan')->toArray() ?? []) !!},
+                    labels: {!! json_encode($topIndustri->pluck('nama_perusahaan')->values()->all(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
                     datasets: [{
                         label: 'Jumlah Siswa',
-                        data: {!! json_encode($topIndustri->pluck('penempatan_count')->toArray() ?? []) !!},
+                        data: {!! json_encode($topIndustri->pluck('penempatan_count')->values()->all(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) !!},
                         backgroundColor: 'rgba(59, 130, 246, 0.5)',
                         borderColor: '#3B82F6',
                         borderWidth: 2,
