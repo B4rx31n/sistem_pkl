@@ -145,6 +145,17 @@ class LaporanController extends Controller
             if (!$user->siswa) {
                 return redirect()->back()->with('error', 'Data siswa tidak ditemukan.');
             }
+
+            // === PROTEKSI: Laporan PKL terbuka jika sudah ada nilai dari Guru ATAU Industri ===
+            $sudahDinilai = MonitoringNilai::whereHas('penempatan', function ($q) use ($user) {
+                $q->where('siswa_id', $user->siswa->id);
+            })
+                ->exists();
+
+            if (!$sudahDinilai) {
+                return redirect()->back()->with('error', 'Laporan PKL belum tersedia. Menunggu penilaian dari pihak industri atau guru.');
+            }
+
             $query->where('siswa_id', $user->siswa->id);
         } elseif ($user->role == 'guru') {
             if (!$user->guru) {
@@ -176,12 +187,20 @@ class LaporanController extends Controller
     {
         $user = auth()->user();
 
-        $penempatan = PenempatanPkl::with(['siswa', 'industri', 'guru', 'kompetensi', 'monitoringNilai'])
+        $penempatan = PenempatanPkl::with(['siswa', 'industri', 'guru', 'kompetensi'])
             ->findOrFail($penempatan_id);
 
         if ($user->role == 'siswa') {
             if (!$user->siswa || $penempatan->siswa_id != $user->siswa->id) {
                 abort(403);
+            }
+
+            // === PROTEKSI: Export Excel terbuka jika sudah ada nilai dari Guru ATAU Industri ===
+            $sudahDinilai = MonitoringNilai::where('penempatan_id', $penempatan->id)
+                ->exists();
+
+            if (!$sudahDinilai) {
+                return redirect()->back()->with('error', 'Laporan PKL belum tersedia. Menunggu penilaian dari pihak industri atau guru.');
             }
         } elseif ($user->role == 'guru') {
             if (!$user->guru || $penempatan->guru_id != $user->guru->id) {
@@ -203,9 +222,14 @@ class LaporanController extends Controller
         $kejuruanRoot = $templates->where('kategori', 'kejuruan')->whereNull('parent_id')->sortBy('urutan');
         $sikapItems = $templates->where('kategori', 'sikap')->sortBy('urutan');
 
-        $nilais = $penempatan->monitoringNilai
-            ->where('role_penilai', 'industri')
-            ->keyBy('aspek_penilaian');
+        // Mengambil nilai dan merata-ratakan
+        $nilaisRaw = MonitoringNilai::where('penempatan_id', $penempatan->id)->get();
+
+        $nilais = $nilaisRaw->groupBy('aspek_penilaian')->map(function ($items) {
+            $item = clone $items->first();
+            $item->nilai = round($items->avg('nilai'), 1);
+            return $item;
+        });
 
         $rows = [];
         $styles = [];
@@ -252,16 +276,24 @@ class LaporanController extends Controller
                 if ($existing) {
                     $allKejuruanNilai[] = $existing->nilai;
                 }
-                $add(['', $child->nama_aspek,
+                $add([
+                    '',
+                    $child->nama_aspek,
                     $existing ? $existing->nilai : '',
-                    $existing ? \App\Models\TemplatePenilaian::nilaiToHuruf($existing->nilai) : '']);
+                    $existing ? \App\Models\TemplatePenilaian::nilaiToHuruf($existing->nilai) : ''
+                ]);
             }
         }
         $add(['', 'Jumlah', count($allKejuruanNilai) > 0 ? array_sum($allKejuruanNilai) : '', ''], [0, 1, 1, 0]);
-        $add(['', 'Rata-rata',
-            count($allKejuruanNilai) > 0 ? round(array_sum($allKejuruanNilai) / count($allKejuruanNilai), 1) : '',
-            count($allKejuruanNilai) > 0 ? \App\Models\TemplatePenilaian::nilaiToHuruf((int) (array_sum($allKejuruanNilai) / count($allKejuruanNilai))) : ''],
-            [0, 1, 1, 0]);
+        $add(
+            [
+                '',
+                'Rata-rata',
+                count($allKejuruanNilai) > 0 ? round(array_sum($allKejuruanNilai) / count($allKejuruanNilai), 1) : '',
+                count($allKejuruanNilai) > 0 ? \App\Models\TemplatePenilaian::nilaiToHuruf((int) (array_sum($allKejuruanNilai) / count($allKejuruanNilai))) : ''
+            ],
+            [0, 1, 1, 0]
+        );
         $add(['', '', '', '']);
 
         // B. Aspek Sikap
@@ -275,15 +307,23 @@ class LaporanController extends Controller
             if ($existing) {
                 $allSikapNilai[] = $existing->nilai;
             }
-            $add([$no++, $item->nama_aspek,
+            $add([
+                $no++,
+                $item->nama_aspek,
                 $existing ? $existing->nilai : '',
-                $existing ? \App\Models\TemplatePenilaian::nilaiToHuruf($existing->nilai) : '']);
+                $existing ? \App\Models\TemplatePenilaian::nilaiToHuruf($existing->nilai) : ''
+            ]);
         }
         $add(['', 'Jumlah', count($allSikapNilai) > 0 ? array_sum($allSikapNilai) : '', ''], [0, 1, 1, 0]);
-        $add(['', 'Rata-rata',
-            count($allSikapNilai) > 0 ? round(array_sum($allSikapNilai) / count($allSikapNilai), 1) : '',
-            count($allSikapNilai) > 0 ? \App\Models\TemplatePenilaian::nilaiToHuruf((int) (array_sum($allSikapNilai) / count($allSikapNilai))) : ''],
-            [0, 1, 1, 0]);
+        $add(
+            [
+                '',
+                'Rata-rata',
+                count($allSikapNilai) > 0 ? round(array_sum($allSikapNilai) / count($allSikapNilai), 1) : '',
+                count($allSikapNilai) > 0 ? \App\Models\TemplatePenilaian::nilaiToHuruf((int) (array_sum($allSikapNilai) / count($allSikapNilai))) : ''
+            ],
+            [0, 1, 1, 0]
+        );
 
         $filename = 'laporan-pkl-' . ($penempatan->siswa->nis ?? 'siswa') . '-' . now()->format('Y-m-d') . '.xlsx';
 
@@ -306,6 +346,14 @@ class LaporanController extends Controller
             if (!$user->siswa || $penempatan->siswa_id != $user->siswa->id) {
                 abort(403);
             }
+
+            // === PROTEKSI: Laporan PKL terbuka jika sudah ada nilai dari Guru ATAU Industri ===
+            $sudahDinilai = MonitoringNilai::where('penempatan_id', $penempatan->id)
+                ->exists();
+
+            if (!$sudahDinilai) {
+                return redirect()->back()->with('error', 'Laporan PKL belum tersedia. Menunggu penilaian dari pihak industri atau guru.');
+            }
         } elseif ($user->role == 'guru') {
             if (!$user->guru || $penempatan->guru_id != $user->guru->id) {
                 abort(403);
@@ -326,10 +374,14 @@ class LaporanController extends Controller
         $kejuruanRoot = $templates->where('kategori', 'kejuruan')->whereNull('parent_id')->sortBy('urutan');
         $sikapItems = $templates->where('kategori', 'sikap')->sortBy('urutan');
 
-        $nilais = MonitoringNilai::where('penempatan_id', $penempatan->id)
-            ->where('role_penilai', 'industri')
-            ->get()
-            ->keyBy('aspek_penilaian');
+        // Mengambil nilai dan merata-ratakan jika dinilai oleh Guru & Industri
+        $nilaisRaw = MonitoringNilai::where('penempatan_id', $penempatan->id)->get();
+
+        $nilais = $nilaisRaw->groupBy('aspek_penilaian')->map(function ($items) {
+            $item = clone $items->first();
+            $item->nilai = round($items->avg('nilai'), 1);
+            return $item;
+        });
 
         return view('laporan.pkl_show', compact('penempatan', 'nilais', 'templates', 'kejuruanRoot', 'sikapItems'));
     }

@@ -77,52 +77,72 @@ class NilaiController extends Controller
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
         $templates = TemplatePenilaian::active()->where('tipe', 'item')->forJurusan($siswaJurusan)->get();
 
-        // Transaksi: semua nilai tersimpan atomik (gagal di tengah = tidak
-        // menyisakan data setengah jadi)
-        \Illuminate\Support\Facades\DB::transaction(function () use ($templates, $request, $penempatan) {
+        // Gabungan: fitur "kosongkan nilai" (hapus) dari Siti + transaksi &
+        // validasi dari perbaikan keamanan. Semua perubahan atomic.
+        $saved = 0;
+        $deleted = 0;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($templates, $request, $penempatan, &$saved, &$deleted) {
             foreach ($templates as $template) {
                 $nilaiKey = 'nilai_' . $template->id;
-                if ($request->has($nilaiKey) && $request->input($nilaiKey) !== null && $request->input($nilaiKey) !== '') {
-                    $nilaiVal = (int) $request->input($nilaiKey);
+                $nilaiVal = $request->input($nilaiKey);
 
-                    $request->validate([
-                        $nilaiKey => 'required|integer|min:0|max:100',
-                    ]);
+                // Nilai dikosongkan (null / string kosong) -> hapus nilai lama
+                if ($nilaiVal === null || $nilaiVal === '') {
+                    $deletedCount = MonitoringNilai::where('penempatan_id', $penempatan->id)
+                        ->where('aspek_penilaian', $template->nama_aspek)
+                        ->where('role_penilai', 'guru')
+                        ->delete();
 
-                    $catatanKey = 'catatan_' . $template->id;
-                    $catatan = $request->input($catatanKey, null);
-                    if (is_array($catatan)) {
-                        $catatan = null;
+                    if ($deletedCount > 0) {
+                        $deleted++;
                     }
 
-                    MonitoringNilai::updateOrCreate(
-                        [
-                            'penempatan_id' => $penempatan->id,
-                            'aspek_penilaian' => $template->nama_aspek,
-                            'role_penilai' => 'guru',
-                        ],
-                        [
-                            'guru_id' => auth()->user()->guru->id,
-                            'nilai' => $nilaiVal,
-                            'catatan' => $catatan,
-                            'is_hidden_from_siswa' => false,
-                            'tanggal_penilaian' => now()->toDateString(),
-                        ]
-                    );
+                    continue;
                 }
+
+                $request->validate([
+                    $nilaiKey => 'required|integer|min:0|max:100',
+                ]);
+
+                $catatanKey = 'catatan_' . $template->id;
+                $catatan = $request->input($catatanKey, null);
+                if (is_array($catatan)) {
+                    $catatan = null;
+                }
+
+                MonitoringNilai::updateOrCreate(
+                    [
+                        'penempatan_id' => $penempatan->id,
+                        'aspek_penilaian' => $template->nama_aspek,
+                        'role_penilai' => 'guru',
+                    ],
+                    [
+                        'guru_id' => auth()->user()->guru->id,
+                        'nilai' => (int) $nilaiVal,
+                        'catatan' => $catatan,
+                        'is_hidden_from_siswa' => false,
+                        'tanggal_penilaian' => now()->toDateString(),
+                    ]
+                );
+                $saved++;
             }
         });
 
-        $saved = MonitoringNilai::where('penempatan_id', $penempatan->id)
-            ->where('role_penilai', 'guru')
-            ->count();
-
-        if ($saved == 0) {
-            return back()->with('error', 'Minimal satu nilai harus diisi.');
+        // Pesan sukses berdasarkan aksi yang dilakukan
+        if ($saved > 0 && $deleted > 0) {
+            return redirect()->route('guru.nilai.show', $penempatan->id)
+                ->with('success', "Berhasil menyimpan {$saved} nilai dan menghapus {$deleted} nilai kosong.");
+        } elseif ($saved > 0) {
+            return redirect()->route('guru.nilai.show', $penempatan->id)
+                ->with('success', "Berhasil menyimpan {$saved} penilaian.");
+        } elseif ($deleted > 0) {
+            return redirect()->route('guru.nilai.show', $penempatan->id)
+                ->with('success', "Berhasil mengosongkan {$deleted} penilaian.");
         }
 
         return redirect()->route('guru.nilai.show', $penempatan->id)
-            ->with('success', "Berhasil menyimpan {$saved} penilaian.");
+            ->with('info', 'Tidak ada perubahan pada nilai.');
     }
 
     public function show($penempatan_id)

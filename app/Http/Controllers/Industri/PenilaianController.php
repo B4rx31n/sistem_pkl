@@ -69,13 +69,12 @@ class PenilaianController extends Controller
 
     public function store(Request $request, $penempatan_id)
     {
-        $user = auth()->user();
-        $industri = $user->industri;
+        $penempatan = PenempatanPkl::findOrFail($penempatan_id);
 
-        $penempatan = PenempatanPkl::with('siswa')
-            ->where('industri_id', $industri->id)
-            ->where('status', 'aktif')
-            ->findOrFail($penempatan_id);
+        // Validasi akses (pastikan industri ini memang membimbing siswa tersebut)
+        if ($penempatan->industri_id != auth()->user()->industri->id) {
+            abort(403, 'Anda tidak memiliki akses ke data ini.');
+        }
 
         $siswaJurusan = $penempatan->siswa->jurusan ?? null;
 
@@ -84,49 +83,67 @@ class PenilaianController extends Controller
             ->forJurusan($siswaJurusan)
             ->get();
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($templates, $request, $penempatan) {
+        // Gabungan: fitur "kosongkan nilai" (hapus) dari Siti + transaksi &
+        // validasi dari perbaikan keamanan. Semua perubahan atomic.
+        $saved = 0;
+        $deleted = 0;
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($templates, $request, $penempatan, &$saved, &$deleted) {
             foreach ($templates as $template) {
                 $nilaiKey = 'nilai_' . $template->id;
-                if ($request->has($nilaiKey) && $request->input($nilaiKey) !== null && $request->input($nilaiKey) !== '') {
-                    $nilaiVal = (int) $request->input($nilaiKey);
+                $nilaiVal = $request->input($nilaiKey);
 
-                    $request->validate([
-                        $nilaiKey => 'required|integer|min:0|max:100',
-                    ]);
+                // Nilai dikosongkan (null / string kosong) -> hapus nilai lama
+                if ($nilaiVal === null || $nilaiVal === '') {
+                    $deletedCount = MonitoringNilai::where('penempatan_id', $penempatan->id)
+                        ->where('aspek_penilaian', $template->nama_aspek)
+                        ->where('role_penilai', 'industri')
+                        ->delete();
 
-                    $catatanKey = 'catatan_' . $template->id;
-                    $catatan = $request->input($catatanKey, null);
-                    if (is_array($catatan)) {
-                        $catatan = null;
+                    if ($deletedCount > 0) {
+                        $deleted++;
                     }
 
-                    MonitoringNilai::updateOrCreate(
-                        [
-                            'penempatan_id' => $penempatan->id,
-                            'aspek_penilaian' => $template->nama_aspek,
-                            'role_penilai' => 'industri',
-                        ],
-                        [
-                            'guru_id' => $penempatan->guru_id,
-                            'nilai' => $nilaiVal,
-                            'catatan' => $catatan,
-                            'is_hidden_from_siswa' => false,
-                            'tanggal_penilaian' => now()->toDateString(),
-                        ]
-                    );
+                    continue;
                 }
+
+                $request->validate([
+                    $nilaiKey => 'required|integer|min:0|max:100',
+                ]);
+
+                $catatanKey = 'catatan_' . $template->id;
+                $catatan = $request->input($catatanKey, null);
+                if (is_array($catatan)) {
+                    $catatan = null;
+                }
+
+                MonitoringNilai::updateOrCreate(
+                    [
+                        'penempatan_id' => $penempatan->id,
+                        'aspek_penilaian' => $template->nama_aspek,
+                        'role_penilai' => 'industri',
+                    ],
+                    [
+                        // monitoring_nilai hanya punya kolom guru_id (tidak ada
+                        // industri_id), jadi simpan guru pembimbing penempatan.
+                        'guru_id' => $penempatan->guru_id,
+                        'nilai' => (int) $nilaiVal,
+                        'catatan' => $catatan,
+                        'is_hidden_from_siswa' => false,
+                        'tanggal_penilaian' => now()->toDateString(),
+                    ]
+                );
+                $saved++;
             }
         });
 
-        $saved = MonitoringNilai::where('penempatan_id', $penempatan->id)
-            ->where('role_penilai', 'industri')
-            ->count();
-
-        if ($saved == 0) {
-            return back()->with('error', 'Minimal satu nilai harus diisi.');
+        // Pesan feedback (gaya Siti)
+        if ($saved > 0 || $deleted > 0) {
+            return redirect()->route('industri.penilaian.show', $penempatan->id)
+                ->with('success', "Berhasil memproses penilaian. Disimpan: {$saved}, Dikosongkan: {$deleted}.");
         }
 
         return redirect()->route('industri.penilaian.show', $penempatan->id)
-            ->with('success', "Berhasil menyimpan {$saved} penilaian.");
+            ->with('info', 'Tidak ada perubahan nilai.');
     }
 }

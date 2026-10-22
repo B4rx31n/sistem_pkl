@@ -5,7 +5,7 @@
         </a>
 
         <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-            <span class="navbar-toggler-icon"></span>
+            <span class="navbar-toggler-icon"><span></span></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarNav">

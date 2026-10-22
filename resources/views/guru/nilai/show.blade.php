@@ -247,23 +247,5 @@
             ->where('guru_id', auth()->user()->guru->id)
             ->first();
     @endphp
-
-    @if($kesimpulan)
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-6">
-            <h3 class="text-lg font-bold text-gray-800 dark:text-white mb-4 border-b pb-2">
-                <i class="fas fa-award mr-2 text-purple-500"></i> Nilai Kesimpulan Akhir (Raport)
-            </h3>
-            <div class="text-center p-6 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                <p class="text-sm text-gray-500">Nilai Kesimpulan</p>
-                <p class="text-4xl font-bold text-purple-600 mt-1">{{ number_format($kesimpulan->nilai_kesimpulan, 1) }}</p>
-                @if($kesimpulan->catatan_kesimpulan)
-                    <p class="text-sm text-gray-500 mt-3">{{ $kesimpulan->catatan_kesimpulan }}</p>
-                @endif
-                <a href="{{ route('guru.kesimpulan.show', $penempatan->id) }}" class="btn-warning btn-sm mt-3 inline-block">
-                    <i class="fas fa-edit mr-1"></i> Update Kesimpulan
-                </a>
-            </div>
-        </div>
-    @endif
 </div>
 @endsection

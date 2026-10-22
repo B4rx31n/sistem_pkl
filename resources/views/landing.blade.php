@@ -101,31 +101,39 @@
                 <div class="col-lg-6 hero-image text-center">
                     <div class="hero-text-box"
                         style="
-                                background: #4f46e5;
-                                border-radius: 12px;
-                                padding: 60px 30px;
-                                min-height: 400px;
-                                display: flex;
-                                flex-direction: column;
-                                justify-content: center;
-                                align-items: center;
-                                color: white;
-                                width: 100%; ">
-                            <h1 style="
-                                font-size: 72px;
-                                font-weight: 700;
-                                letter-spacing: 4px;
-                                margin: 0;
-                                line-height: 1.1; "> LENTERA</h1>
-                        <p style="
-                                font-size: 18px;
-                                font-weight: 300;
-                                margin-top: 16px;
-                                max-width: 80%;
-                                letter-spacing: 0.5px;
-                                line-height: 1.6;
-                                opacity: 0.95; ">
-                            Layanan Ekosistem Navigasi Terpadu dan Evaluasi Relasi Aktivitas PKL</p>
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            border-radius: 16px;
+            padding: clamp(30px, 6vw, 60px) clamp(18px, 4vw, 30px);
+            min-height: clamp(240px, 45vw, 400px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(79, 70, 229, 0.35);">
+
+                        <h1
+                            style="
+            font-size: clamp(32px, 8vw, 72px);
+            font-weight: 700;
+            letter-spacing: clamp(2px, 0.6vw, 6px);
+            margin: 0;
+            line-height: 1.1;">
+                            LENTERA
+                        </h1>
+
+                        <p
+                            style="
+            font-size: clamp(12.5px, 2.2vw, 18px);
+            font-weight: 300;
+            margin-top: clamp(10px, 2vw, 18px);
+            max-width: 90%;
+            letter-spacing: 0.5px;
+            line-height: 1.6;
+            opacity: 0.95;">
+                            Layanan Ekosistem Navigasi Terpadu dan Evaluasi Relasi Aktivitas PKL
+                        </p>
                     </div>
                 </div>
             </div>
@@ -133,15 +141,18 @@
     </section>
 
     <!-- ============ FEATURES ============ -->
-    <section class="features-section" id="features">
+    <section class="features-section py-5" id="features">
         <div class="container">
             <div class="text-center mb-5">
-                <h2>Fitur Unggulan</h2>
-                <p class="subtitle">Semua yang Anda butuhkan untuk mengelola PKL dengan efisien</p>
+                <h2 class="fw-bold">Fitur Unggulan</h2>
+                <p class="subtitle text-muted">Semua yang Anda butuhkan untuk mengelola PKL dengan efisien</p>
             </div>
-            <div class="row g-4">
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
+
+            <!-- Grid Responsif: col-12 (HP), col-sm-6 (Tablet), col-lg-4 (PC) -->
+            <div class="row g-4 justify-content-center">
+                <!-- Card 1: Manajemen Siswa -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
                         data-feature="siswa">
                         <div class="feature-icon bg-primary bg-opacity-10 text-primary">
                             <i class="fas fa-user-graduate"></i>
@@ -151,8 +162,10 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
+
+                <!-- Card 2: Mitra Industri -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
                         data-feature="industri">
                         <div class="feature-icon bg-success bg-opacity-10 text-success">
                             <i class="fas fa-building"></i>
@@ -162,9 +175,11 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="monitoring">
+
+                <!-- Card 3: Monitoring & Laporan -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="monitoring">
                         <div class="feature-icon bg-warning bg-opacity-10 text-warning">
                             <i class="fas fa-chart-line"></i>
                         </div>
@@ -173,9 +188,11 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="bimbingan">
+
+                <!-- Card 4: Bimbingan Online -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="bimbingan">
                         <div class="feature-icon bg-info bg-opacity-10 text-info">
                             <i class="fas fa-comments"></i>
                         </div>
@@ -184,9 +201,11 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="export">
+
+                <!-- Card 5: Export PDF -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="export">
                         <div class="feature-icon bg-danger bg-opacity-10 text-danger">
                             <i class="fas fa-file-pdf"></i>
                         </div>
@@ -195,23 +214,25 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <!-- ===== FITUR BARU: PENGAJUAN PKL ===== -->
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="pengajuan">
-                        <div class="feature-icon bg-primary bg-opacity-10 text-primary" style="color:#0d6efd;">
+
+                <!-- Card 6: Pengajuan Tempat PKL -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="pengajuan">
+                        <div class="feature-icon bg-primary bg-opacity-10 text-primary">
                             <i class="fas fa-paper-plane"></i>
                         </div>
                         <h5>Pengajuan Tempat PKL</h5>
-                        <p>Siswa dapat mengajukan pilihan tempat PKL yang akan
-                            diverifikasi oleh admin.</p>
+                        <p>Siswa dapat mengajukan pilihan tempat PKL yang akan diverifikasi oleh admin.</p>
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="aman">
-                        <div class="feature-icon bg-purple bg-opacity-10 text-purple" style="color:#7c3aed;">
+
+                <!-- Card 7: Aman & Terpercaya -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="aman">
+                        <div class="feature-icon bg-opacity-10" style="background-color: #ede9fe; color: #7c3aed;">
                             <i class="fas fa-shield-alt"></i>
                         </div>
                         <h5>Aman & Terpercaya</h5>
@@ -219,10 +240,12 @@
                         <span class="detail-link"><i class="fas fa-arrow-right me-1"></i>Selengkapnya</span>
                     </div>
                 </div>
-                <div class="col-md-4">
-                    <div class="feature-card" role="button" data-bs-toggle="modal" data-bs-target="#featureModal"
-                        data-feature="penilaian_industri">
-                        <div class="feature-icon bg-success bg-opacity-10 text-success" style="color:#0d9488;">
+
+                <!-- Card 8: Penilaian Industri -->
+                <div class="col-12 col-sm-6 col-lg-4">
+                    <div class="feature-card h-100" role="button" data-bs-toggle="modal"
+                        data-bs-target="#featureModal" data-feature="penilaian_industri">
+                        <div class="feature-icon bg-success bg-opacity-10 text-success">
                             <i class="fas fa-clipboard-check"></i>
                         </div>
                         <h5>Penilaian Industri</h5>
@@ -233,7 +256,6 @@
             </div>
         </div>
     </section>
-
     <!-- ============ FOOTER ============ -->
     <footer class="footer" id="contact">
         <div class="container position-relative">
@@ -305,14 +327,20 @@
                 </div>
             </div>
             <div class="footer-bottom text-center">
-                <p class="mb-0">
+                <p class="mb-1">
                     @if (setting('footer_copyright'))
                         {{ setting('footer_copyright') }}
                     @else
-                        &copy; {{ date('Y') }} {{ setting('footer_nama', 'Sistem PKL') }}. All rights reserved.
+                        &copy; {{ date('Y') }} {{ setting('footer_nama', 'Sistem PKL') }} · SMK Negeri 2 Padang
+                        Panjang
                     @endif
                 </p>
+
+                <small style="color: #9CA3AF; display: block; margin-top: 4px;">
+                    Program Keahlian Rekayasa Perangkat Lunak
+                </small>
             </div>
+
         </div>
     </footer>
 
@@ -402,13 +430,10 @@
                         <div class="col-md-6">
                             <div class="p-3 bg-light rounded-4 h-100">
                                 <h6 class="fw-bold text-danger">
-                                    <i class="fas fa-heart me-2"></i>Dibuat Oleh Kelompok 5
+                                    <i class="fas fa-heart me-2"></i>Dibuat Oleh:
                                 </h6>
                                 <ul class="text-muted mb-0" style="font-size:0.95rem; padding-left:20px;">
                                     <li><strong>Siti</strong> - Backend Developer</li>
-                                    <li><strong>Nazhwa Humayra</strong> - UI/UX Designer</li>
-                                    <li><strong>Aldo Diali Putra</strong> - Frontend Developer</li>
-                                    <li><strong>Muhammad Tahmid</strong> - UI/UX Designer</li>
                                 </ul>
                             </div>
                         </div>
