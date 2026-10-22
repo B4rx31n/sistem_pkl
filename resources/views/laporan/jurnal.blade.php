@@ -21,11 +21,11 @@
         <form method="GET" action="{{ route('laporan.jurnal') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Mulai</label>
-                <input type="date" name="tanggal_mulai" value="{{ request('tanggal_mulai') }}" class="form-input">
+                <input type="date" name="tanggal_mulai" value="{{ is_array(request('tanggal_mulai')) ? '' : request('tanggal_mulai') }}" class="form-input">
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Tanggal Selesai</label>
-                <input type="date" name="tanggal_selesai" value="{{ request('tanggal_selesai') }}" class="form-input">
+                <input type="date" name="tanggal_selesai" value="{{ is_array(request('tanggal_selesai')) ? '' : request('tanggal_selesai') }}" class="form-input">
             </div>
             @if(auth()->user()->role == 'admin' || auth()->user()->role == 'guru')
                 <div>

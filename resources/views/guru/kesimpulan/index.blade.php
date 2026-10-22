@@ -18,7 +18,7 @@
         <form method="GET" action="{{ route('guru.kesimpulan.index') }}" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
                 <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Cari</label>
-                <input type="text" name="search" value="{{ request('search') }}" class="form-input"
+                <input type="text" name="search" value="{{ is_array(request('search')) ? '' : request('search') }}" class="form-input"
                     placeholder="Cari nama siswa atau NIS...">
             </div>
             <div>

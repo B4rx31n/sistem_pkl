@@ -61,7 +61,7 @@
                 <form method="GET" action="{{ route('siswa.jurnal.index') }}" class="row g-3">
                     <div class="col-md-4">
                         <label class="form-label">Tanggal</label>
-                        <input type="date" name="tanggal" value="{{ request('tanggal') }}" class="form-control">
+                        <input type="date" name="tanggal" value="{{ is_array(request('tanggal')) ? '' : request('tanggal') }}" class="form-control">
                     </div>
                     <div class="col-md-4">
                         <label class="form-label">Status</label>

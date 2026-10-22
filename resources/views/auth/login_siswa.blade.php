@@ -127,7 +127,7 @@
 
             <form method="POST" action="{{ route('login.siswa') }}">
                 @csrf
-                <input type="hidden" name="redirect" value="{{ request('redirect') }}">
+                <input type="hidden" name="redirect" value="{{ is_array(request('redirect')) ? '' : request('redirect') }}">
 
                 <div class="mb-3">
                     <label class="form-label">NIS</label>

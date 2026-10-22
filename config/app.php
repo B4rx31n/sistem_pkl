@@ -56,6 +56,20 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Paksa HTTPS
+    |--------------------------------------------------------------------------
+    |
+    | Bila bernilai true, permintaan HTTP dari host non-lokal akan dialihkan
+    | ke HTTPS. Berguna saat aplikasi diakses lewat reverse proxy / tunnel
+    | HTTPS (mis. Cloudflare Tunnel). Akses lokal (localhost/.test) tetap
+    | dibiarkan lewat HTTP agar pengembangan tidak terganggu.
+    |
+    */
+
+    'force_https' => (bool) env('FORCE_HTTPS', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

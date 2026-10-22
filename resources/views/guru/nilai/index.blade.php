@@ -18,7 +18,7 @@
         <form method="GET" action="{{ route('guru.nilai.index') }}" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <div class="relative">
                 <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                <input type="text" name="search" value="{{ request('search') }}" 
+                <input type="text" name="search" value="{{ is_array(request('search')) ? '' : request('search') }}" 
                        placeholder="Cari siswa..." class="form-input pl-10">
             </div>
             <div>

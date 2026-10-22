@@ -22,7 +22,7 @@
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-4 mb-6">
             <form method="GET" action="{{ route('industri.penilaian.index') }}" class="flex gap-4">
                 <div class="flex-1">
-                    <input type="text" name="search" value="{{ request('search') }}" class="form-input"
+                    <input type="text" name="search" value="{{ is_array(request('search')) ? '' : request('search') }}" class="form-input"
                         placeholder="Cari nama siswa atau NIS...">
                 </div>
                 <button type="submit" class="btn-primary">

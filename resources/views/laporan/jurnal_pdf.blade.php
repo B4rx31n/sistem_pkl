@@ -22,8 +22,12 @@
 <body>
     <div class="header">
         <h1>LAPORAN JURNAL PKL</h1>
-        <p>Periode: {{ request('tanggal_mulai') ? \Carbon\Carbon::parse(request('tanggal_mulai'))->format('d/m/Y') : 'Awal' }} - 
-           {{ request('tanggal_selesai') ? \Carbon\Carbon::parse(request('tanggal_selesai'))->format('d/m/Y') : 'Akhir' }}</p>
+        @php
+            $tglMulai = is_array(request('tanggal_mulai')) ? null : request('tanggal_mulai');
+            $tglSelesai = is_array(request('tanggal_selesai')) ? null : request('tanggal_selesai');
+        @endphp
+        <p>Periode: {{ $tglMulai ? \Carbon\Carbon::parse($tglMulai)->format('d/m/Y') : 'Awal' }} - 
+           {{ $tglSelesai ? \Carbon\Carbon::parse($tglSelesai)->format('d/m/Y') : 'Akhir' }}</p>
         <p>Tanggal Cetak: {{ now()->format('d F Y H:i') }}</p>
     </div>
 

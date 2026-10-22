@@ -33,7 +33,7 @@
                 <div class="flex-1">
                     <div class="relative">
                         <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-                        <input type="text" name="search" value="{{ request('search') }}"
+                        <input type="text" name="search" value="{{ is_array(request('search')) ? '' : request('search') }}"
                             placeholder="Cari kode atau nama kompetensi..." class="form-input pl-10">
                     </div>
                 </div>

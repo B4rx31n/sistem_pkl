@@ -32,7 +32,7 @@
                         <i class="fas fa-search absolute left-3 text-gray-400"
                             style="top: 50%; transform: translateY(-50%);"></i>
 
-                        <input type="text" name="search" value="{{ request('search') }}" placeholder="Nama atau NIS..."
+                        <input type="text" name="search" value="{{ is_array(request('search')) ? '' : request('search') }}" placeholder="Nama atau NIS..."
                             class="form-input w-full pl-10 pr-3"
                             style="height: 44px !important; min-height: 44px !important;
                            max-height: 44px !important; box-sizing: border-box;
